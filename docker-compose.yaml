@@ -1,4 +1,16 @@
 services:
+  oc-be:
+    build: 
+      context: ./oc-be
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://oc-user:this-is-a-strong-password@db:5432/oc-db
+    depends_on:
+      - db
+    networks:
+      - application-network
   db:
     image: postgres:latest
     environment:
