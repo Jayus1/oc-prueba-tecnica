@@ -1,4 +1,4 @@
-import { PrismaClient, Planta, Cuidado } from '../generated/prisma'
+import { PrismaClient, Planta, Cuidado } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const plantasData: Planta[] = [
