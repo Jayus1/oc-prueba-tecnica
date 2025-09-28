@@ -20,6 +20,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate, useParams } from "react-router";
 import { formatDate } from "../../utils/formatDate.util";
 import { formatTipoCuidado } from "../../utils/tipoCuidado.util";
+import Swal from "sweetalert2";
 
 const PlantsDetailsPage = () => {
   const { id } = useParams();
@@ -44,18 +45,50 @@ const PlantsDetailsPage = () => {
     } catch (error) {
       console.error("Error fetching planta:", error);
       setError("Error al cargar la planta");
+
+      Swal.fire({
+        title: 'Error',
+        text: 'No se pudo cargar la información de la planta. Por favor, intenta de nuevo.',
+        icon: 'error',
+        confirmButtonText: 'OK'
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDeleteCuidado = async (cuidadoId: number) => {
-    try {
-      await cuidadosService.deleteCuidado(cuidadoId);
-      await fetchPlanta();
-      navigation(0);
-    } catch (error) {
-      console.error("Error deleting cuidado:", error);
+    const result = await Swal.fire({
+      title: '¿Estás seguro?',
+      text: '¿Quieres eliminar este cuidado?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await cuidadosService.deleteCuidado(cuidadoId);
+        await fetchPlanta();
+
+        Swal.fire({
+          title: '¡Eliminado!',
+          text: 'El cuidado ha sido eliminado correctamente.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      } catch (error) {
+        Swal.fire({
+          title: 'Error',
+          text: 'No se pudo eliminar el cuidado. Por favor, inténta de nuevo.',
+          icon: 'error',
+          confirmButtonText: 'OK'
+        });
+      }
     }
   };
 

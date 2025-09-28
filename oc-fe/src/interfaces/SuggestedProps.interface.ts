@@ -1,4 +1,4 @@
-export type SuggestedProps = {
+export interface SuggestedProps {
     planta: number;
     fechaInicio: Date;
     fechaFin: Date;

@@ -17,10 +17,11 @@ export const validateRiegoTime = (
         if (cuidado.idPlanta !== idPlanta) return false;
         if (cuidado.tipo !== TipoCuidado.FERTILIZACION) return false;
 
-        const fechaCuidado = new Date(cuidado.fechaInicio);
+        const fechaCuidado = new Date(cuidado.fechaFin ?? cuidado.fechaInicio);
 
         return fechaCuidado >= fecha24hAntes && fechaCuidado <= fechaRiego;
     });
+
 
     return !fertilizacionConflicto;
 };

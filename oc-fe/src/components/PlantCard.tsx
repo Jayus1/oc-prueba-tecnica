@@ -6,16 +6,57 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import { CardHeader, Avatar } from "@mui/material";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
-import type { PlantCardType } from "../types/PlantCard.type";
+import DeleteIcon from "@mui/icons-material/Delete";
+import type { PlantCardType } from "../interfaces/PlantCard.interface";
 import { useNavigate } from "react-router";
+import { plantasService } from "../services/plantas.services";
+import Swal from "sweetalert2";
 
 export default function PlantCard({
   id,
   ubicacion: location,
   nombre: name,
   especie: species,
+  onDelete,
 }: PlantCardType) {
   const navigation = useNavigate();
+
+  const handleDelete = async () => {
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: `¿Quieres eliminar la planta "${name}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await plantasService.deletePlanta(id);
+        onDelete?.();
+
+        Swal.fire({
+          title: "¡Eliminada!",
+          text: "La planta ha sido eliminada correctamente.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } catch (error) {
+        console.error("Error deleting plant:", error);
+
+        Swal.fire({
+          title: "Error",
+          text: "No se pudo eliminar la planta. Inténtalo de nuevo.",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
+    }
+  };
 
   return (
     <Box sx={{ minWidth: 275, maxWidth: 320 }}>
@@ -74,7 +115,22 @@ export default function PlantCard({
             📍 {location || "No especificado"}
           </Typography>
         </CardContent>
-        <CardActions sx={{ justifyContent: "flex-end", px: 2, pb: 2 }}>
+        <CardActions sx={{ justifyContent: "space-between", px: 2, pb: 2 }}>
+          <Button
+            onClick={handleDelete}
+            startIcon={<DeleteIcon />}
+            size="small"
+            sx={{
+              color: "#d32f2f",
+              "&:hover": {
+                bgcolor: "rgba(211, 47, 47, 0.1)",
+              },
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
+            Borrar
+          </Button>
           <Button
             variant="contained"
             size="small"

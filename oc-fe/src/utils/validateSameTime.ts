@@ -23,7 +23,7 @@ export const validateFertilizacionAndPoda = (
         if (cuidado.idPlanta !== idPlanta) return false;
         if (cuidado.tipo !== tipoContrario) return false;
 
-        const fechaCuidado = new Date(cuidado.fechaInicio);
+        const fechaCuidado = new Date(cuidado.fechaFin ?? cuidado.fechaInicio);
         return fechaCuidado >= startOfDay && fechaCuidado <= endOfDay;
     });
 

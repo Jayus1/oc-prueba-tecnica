@@ -1,142 +1,152 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TextField, Button, Box } from "@mui/material";
 import Modal from "../../../components/Modal";
 import type { PlantasPostDto } from "../../../DTO/PlantasPostDTO";
 import { plantasService } from "../../../services/plantas.services";
-import { useNavigate } from "react-router";
-import type { CreatePlantModalProps } from "../../../types/CreatePlantModalProps.type";
+import type { CreatePlantModalProps } from "../../../interfaces/CreatePlantModalProps.interface";
+import { Formik, Form, Field } from "formik";
+import type { FieldProps } from "formik";
+import * as Yup from "yup";
+import Swal from "sweetalert2";
 
-const CreatePlantModal = ({ open, onClose }: CreatePlantModalProps) => {
-  const [formData, setFormData] = useState<PlantasPostDto>({
+const validationSchema = Yup.object({
+  nombre: Yup.string()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(50, "El nombre no puede tener más de 50 caracteres")
+    .required("El nombre es requerido"),
+  especie: Yup.string()
+    .min(2, "La especie debe tener al menos 2 caracteres")
+    .max(50, "La especie no puede tener más de 50 caracteres")
+    .required("La especie es requerida"),
+  ubicacion: Yup.string()
+    .min(2, "La ubicación debe tener al menos 2 caracteres")
+    .max(100, "La ubicación no puede tener más de 100 caracteres")
+    .required("La ubicación es requerida"),
+});
+
+const CreatePlantModal = ({
+  open,
+  onClose,
+  onSuccess,
+}: CreatePlantModalProps) => {
+  const [isCreating, setIsCreating] = useState(false);
+
+  const initialValues: PlantasPostDto = {
     nombre: "",
     especie: "",
     ubicacion: "",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const [isCreating, setIsCreating] = useState(false);
-  const navigation = useNavigate();
+  };
 
   const handleCreatePlant = async (plantData: PlantasPostDto) => {
     try {
       setIsCreating(true);
       await plantasService.createPlanta(plantData);
+
+      Swal.fire({
+        title: "¡Éxito!",
+        text: "La planta ha sido creada correctamente.",
+        icon: "success",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
       onClose();
+      onSuccess?.();
     } catch (error) {
       console.error("Error creating plant:", error);
+
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo crear la planta. Por favor, inténta de nuevo.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleInputChange =
-    (field: keyof PlantasPostDto) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData({
-        ...formData,
-        [field]: event.target.value,
-      });
-
-      if (errors[field]) {
-        setErrors({
-          ...errors,
-          [field]: "",
-        });
-      }
-    };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.nombre.trim()) {
-      newErrors.nombre = "El nombre es requerido";
-    }
-    if (!formData.especie.trim()) {
-      newErrors.especie = "La especie es requerida";
-    }
-    if (!formData.ubicacion.trim()) {
-      newErrors.ubicacion = "La ubicación es requerida";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = () => {
-    if (validateForm()) {
-      handleCreatePlant(formData);
-      navigation(0);
-      handleClose();
-    }
-  };
-
   const handleClose = () => {
-    setFormData({
-      nombre: "",
-      especie: "",
-      ubicacion: "",
-    });
-    setErrors({});
     onClose();
   };
 
-  const actions = (
-    <Box display="flex" gap={2}>
-      <Button onClick={handleClose} color="secondary">
-        Cancelar
-      </Button>
-      <Button
-        onClick={handleSubmit}
-        variant="contained"
-        color="primary"
-        disabled={isCreating}
-      >
-        {isCreating ? "Creando..." : "Crear Planta"}
-      </Button>
-    </Box>
-  );
-
   return (
-    <Modal
-      open={open}
-      onClose={handleClose}
-      title="Crear Nueva Planta"
-      actions={actions}
-      maxWidth="sm"
+    <Formik
+      initialValues={initialValues}
+      validationSchema={validationSchema}
+      onSubmit={async (values, { resetForm }) => {
+        await handleCreatePlant(values);
+        resetForm();
+      }}
     >
-      <Box display="flex" flexDirection="column" gap={3}>
-        <TextField
-          label="Nombre"
-          value={formData.nombre}
-          onChange={handleInputChange("nombre")}
-          error={!!errors.nombre}
-          helperText={errors.nombre}
-          fullWidth
-          required
-        />
+      {({ errors, touched, isValid, dirty }) => {
+        return (
+          <Modal
+            open={open}
+            onClose={handleClose}
+            title="Crear Nueva Planta"
+            maxWidth="sm"
+          >
+            <Form>
+              <Box display="flex" flexDirection="column" gap={3}>
+                <Field name="nombre">
+                  {({ field }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      label="Nombre"
+                      error={touched.nombre && !!errors.nombre}
+                      helperText={touched.nombre && errors.nombre}
+                      fullWidth
+                      required
+                    />
+                  )}
+                </Field>
 
-        <TextField
-          label="Especie"
-          value={formData.especie}
-          onChange={handleInputChange("especie")}
-          error={!!errors.especie}
-          helperText={errors.especie}
-          fullWidth
-          required
-        />
+                <Field name="especie">
+                  {({ field }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      label="Especie"
+                      error={touched.especie && !!errors.especie}
+                      helperText={touched.especie && errors.especie}
+                      fullWidth
+                      required
+                    />
+                  )}
+                </Field>
 
-        <TextField
-          label="Ubicación"
-          value={formData.ubicacion}
-          onChange={handleInputChange("ubicacion")}
-          error={!!errors.ubicacion}
-          helperText={errors.ubicacion}
-          fullWidth
-          required
-        />
-      </Box>
-    </Modal>
+                <Field name="ubicacion">
+                  {({ field }: FieldProps) => (
+                    <TextField
+                      {...field}
+                      label="Ubicación"
+                      error={touched.ubicacion && !!errors.ubicacion}
+                      helperText={touched.ubicacion && errors.ubicacion}
+                      fullWidth
+                      required
+                    />
+                  )}
+                </Field>
+
+                <Box display="flex" gap={2} justifyContent="flex-end" mt={2}>
+                  <Button onClick={handleClose} color="secondary">
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    color="primary"
+                    disabled={isCreating || !isValid || !dirty}
+                  >
+                    {isCreating ? "Creando..." : "Crear Planta"}
+                  </Button>
+                </Box>
+              </Box>
+            </Form>
+          </Modal>
+        );
+      }}
+    </Formik>
   );
 };
 

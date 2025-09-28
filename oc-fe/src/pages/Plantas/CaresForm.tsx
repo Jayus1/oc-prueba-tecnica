@@ -14,6 +14,10 @@ import {
   InputLabel,
   FormHelperText,
 } from "@mui/material";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import "dayjs/locale/es";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
 import { useNavigate, useParams } from "react-router";
@@ -23,53 +27,52 @@ import { TipoCuidado } from "../../shared/TipoCuidado.enum";
 import type { CuidadosType } from "../../types/Cuidados.type";
 import { validateFertilizacionAndPoda } from "../../utils/validateSameTime";
 import { validateRiegoTime } from "../../utils/validateRiegoTime";
+import { Formik, Form, Field } from "formik";
+import type { FieldProps } from "formik";
+import * as Yup from "yup";
+import Swal from "sweetalert2";
+import dayjs, { type Dayjs } from "dayjs";
+
+dayjs.locale("es");
+
+const validationSchema = Yup.object({
+  tipo: Yup.string().required("El tipo de cuidado es requerido"),
+  fechaInicio: Yup.date()
+    .required("La fecha de inicio es requerida")
+    .typeError("Fecha de inicio inválida"),
+  fechaFin: Yup.date()
+    .required("La fecha de fin es requerida")
+    .typeError("Fecha de fin inválida")
+    .min(
+      Yup.ref("fechaInicio"),
+      "La fecha de fin debe ser posterior a la fecha de inicio"
+    ),
+  notas: Yup.string().max(
+    500,
+    "Las notas no pueden tener más de 500 caracteres"
+  ),
+});
 
 const CareForm = () => {
   const navigate = useNavigate();
   const { plantId, id } = useParams();
 
-  const [formData, setFormData] = useState({
-    tipo: "",
-    fechaInicio: "",
-    fechaFin: "",
-    notas: "",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [existingCuidados, setExistingCuidados] = useState<CuidadosType[]>([]);
+  const [initialValues, setInitialValues] = useState<{
+    tipo: string;
+    fechaInicio: Dayjs | null;
+    fechaFin: Dayjs | null;
+    notas: string;
+  }>({
+    tipo: "",
+    fechaInicio: null,
+    fechaFin: null,
+    notas: "",
+  });
+
   const isEditing = !!id;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
-
-  const handleSelectChange = (event: any) => {
-    const { name, value } = event.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
 
   const fetchCuidadoData = async () => {
     if (!id) return;
@@ -77,18 +80,20 @@ const CareForm = () => {
     setLoadingData(true);
     try {
       const cuidadoData = await cuidadosService.getCuidadoById(parseInt(id));
-      setFormData({
+      const newInitialValues = {
         tipo: cuidadoData.tipo,
-        fechaInicio: new Date(cuidadoData.fechaInicio)
-          .toISOString()
-          .split("T")[0],
-        fechaFin: cuidadoData.fechaFin
-          ? new Date(cuidadoData.fechaFin).toISOString().split("T")[0]
-          : "",
+        fechaInicio: dayjs(cuidadoData.fechaInicio),
+        fechaFin: cuidadoData.fechaFin ? dayjs(cuidadoData.fechaFin) : null,
         notas: cuidadoData.notas || "",
-      });
+      };
+      setInitialValues(newInitialValues);
     } catch (error) {
-      console.error("Error fetching cuidado:", error);
+      Swal.fire({
+        title: "Error",
+        text: "No se pudo cargar la información del cuidado. Por favor, intenta de nuevo.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setLoadingData(false);
     }
@@ -98,13 +103,18 @@ const CareForm = () => {
     if (!plantId) return;
 
     try {
-      const response = await cuidadosService.getAllCuidados();
-      const plantaCuidados = response.filter(
-        (cuidado) => cuidado.idPlanta === parseInt(plantId)
+      const response = await cuidadosService.getCuidadosByPlantId(
+        Number(plantId)
       );
-      setExistingCuidados(plantaCuidados);
+
+      setExistingCuidados(response);
     } catch (error) {
-      console.error("Error fetching existing cuidados:", error);
+      Swal.fire({
+        title: "Error",
+        text: "No se pudieron cargar los cuidados existentes.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     }
   };
 
@@ -117,29 +127,11 @@ const CareForm = () => {
     }
   }, [id, plantId]);
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+  const validateBusinessRules = (values: any) => {
+    const errors: any = {};
 
-    if (!formData.tipo.trim()) {
-      newErrors.tipo = "El tipo de cuidado es requerido";
-    }
-    if (!formData.fechaInicio) {
-      newErrors.fechaInicio = "La fecha de inicio es requerida";
-    }
-    if (!formData.fechaFin) {
-      newErrors.fechaFin = "La fecha de fin es requerida";
-    }
-    if (
-      formData.fechaInicio &&
-      formData.fechaFin &&
-      new Date(formData.fechaInicio) > new Date(formData.fechaFin)
-    ) {
-      newErrors.fechaFin =
-        "La fecha de fin debe ser posterior a la fecha de inicio";
-    }
-
-    if (formData.tipo && formData.fechaInicio && plantId) {
-      const fechaInicio = new Date(formData.fechaInicio);
+    if (values.tipo && values.fechaInicio && plantId) {
+      const fechaInicio = values.fechaInicio.toDate();
       const idPlantaNum = parseInt(plantId);
 
       const cuidadosParaValidar = existingCuidados.filter((c) =>
@@ -148,63 +140,101 @@ const CareForm = () => {
 
       if (
         !validateRiegoTime(
-          formData.tipo,
+          values.tipo,
           fechaInicio,
           idPlantaNum,
           cuidadosParaValidar
         )
       ) {
-        newErrors.fechaInicio =
+        errors.fechaInicio =
           "No se puede regar la planta dentro de las 24 horas posteriores a una fertilización";
       }
 
       if (
         !validateFertilizacionAndPoda(
-          formData.tipo,
+          values.tipo,
           fechaInicio,
           idPlantaNum,
           cuidadosParaValidar
         )
       ) {
-        newErrors.fechaInicio =
+        errors.fechaInicio =
           "No se puede registrar una poda o fertilización en la misma planta el mismo día";
       }
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return errors;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validateForm()) return;
+  const handleSubmit = async (values: any) => {
     if (!plantId) {
-      console.error("Plant ID is required");
+      Swal.fire({
+        title: "Error",
+        text: "ID de planta requerido.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    const businessErrors = validateBusinessRules(values);
+
+    console.log("errores", businessErrors);
+    if (Object.keys(businessErrors).length > 0) {
+      Swal.fire({
+        title: "Error de Validación",
+        text: Object.values(businessErrors)[0] as string,
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+
       return;
     }
 
     setLoading(true);
     try {
       const cuidadoData: CuidadosPostDto = {
-        tipo: formData.tipo,
-        fechaInicio: new Date(formData.fechaInicio),
-        fechaFin: new Date(formData.fechaFin),
-        notas: formData.notas,
+        tipo: values.tipo,
+        fechaInicio: values.fechaInicio.toDate(),
+        fechaFin: values.fechaFin.toDate(),
+        notas: values.notas,
         idPlanta: parseInt(plantId),
       };
 
       if (isEditing) {
         await cuidadosService.updateCuidado(parseInt(id!), cuidadoData);
+        Swal.fire({
+          title: "¡Actualizado!",
+          text: "El cuidado ha sido actualizado correctamente.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
       } else {
         await cuidadosService.createCuidado(cuidadoData);
+        Swal.fire({
+          title: "¡Creado!",
+          text: "El cuidado ha sido creado correctamente.",
+          icon: "success",
+          timer: 2000,
+          showConfirmButton: false,
+        });
       }
 
       navigate(`/plants/${plantId}`, {
         replace: true,
       });
-    } catch (error) {
-      console.error("Error saving care:", error);
+    } catch (error: any) {
+      Swal.fire({
+        title: error.response.data.message ? "Cuidado no valido" : "Error",
+        text:
+          error.response.data.message ??
+          `No se pudo ${
+            isEditing ? "actualizar" : "crear"
+          } el cuidado. Por favor, inténta de nuevo.`,
+        icon: "error",
+        confirmButtonText: "OK",
+      });
     } finally {
       setLoading(false);
     }
@@ -215,193 +245,221 @@ const CareForm = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ borderRadius: 3, overflow: "hidden" }}>
-        <Box
-          sx={{
-            background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-            color: "white",
-            p: 4,
-            textAlign: "center",
-          }}
-        >
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            {isEditing ? "✏️ Editar Cuidado" : "🌱 Agregar Nuevo Cuidado"}
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9 }}>
-            {isEditing
-              ? "Modifica los datos del cuidado"
-              : "Registra un nuevo cuidado para tu planta"}
-          </Typography>
-        </Box>
+    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Paper elevation={3} sx={{ borderRadius: 3, overflow: "hidden" }}>
+          <Box
+            sx={{
+              background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
+              color: "white",
+              p: 4,
+              textAlign: "center",
+            }}
+          >
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              {isEditing ? "✏️ Editar Cuidado" : "🌱 Agregar Nuevo Cuidado"}
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              {isEditing
+                ? "Modifica los datos del cuidado"
+                : "Registra un nuevo cuidado para tu planta"}
+            </Typography>
+          </Box>
 
-        <CardContent sx={{ p: 4 }}>
-          {loadingData ? (
-            <Box
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              minHeight="200px"
-            >
-              <Typography variant="h6">
-                Cargando datos del cuidado...
-              </Typography>
-            </Box>
-          ) : (
-            <Box component="form" onSubmit={handleSubmit}>
-              <Box sx={{ mb: 3 }}>
-                <FormControl
-                  fullWidth
-                  error={!!errors.tipo}
-                  required
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
-                  }}
-                >
-                  <InputLabel>Tipo de Cuidado</InputLabel>
-                  <Select
-                    name="tipo"
-                    value={formData.tipo}
-                    label="Tipo de Cuidado"
-                    onChange={handleSelectChange}
-                  >
-                    <MenuItem value={TipoCuidado.RIEGO}>🚿 Riego</MenuItem>
-                    <MenuItem value={TipoCuidado.FERTILIZACION}>
-                      🌱 Fertilización
-                    </MenuItem>
-                    <MenuItem value={TipoCuidado.PODA}>✂️ Poda</MenuItem>
-                    <MenuItem value={TipoCuidado.LUZ}>☀️ Luz</MenuItem>
-                  </Select>
-                  {errors.tipo && (
-                    <FormHelperText>{errors.tipo}</FormHelperText>
-                  )}
-                </FormControl>
-              </Box>
-
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: 2,
-                  mb: 3,
-                  flexDirection: { xs: "column", md: "row" },
-                }}
-              >
-                <TextField
-                  name="fechaInicio"
-                  label="Fecha de Inicio"
-                  type="date"
-                  value={formData.fechaInicio}
-                  onChange={handleChange}
-                  error={!!errors.fechaInicio}
-                  helperText={errors.fechaInicio}
-                  required
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-
-                <TextField
-                  name="fechaFin"
-                  label="Fecha de Fin"
-                  type="date"
-                  value={formData.fechaFin}
-                  onChange={handleChange}
-                  error={!!errors.fechaFin}
-                  helperText={errors.fechaFin}
-                  required
-                  fullWidth
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-              </Box>
-
-              <Box sx={{ mb: 3 }}>
-                <TextField
-                  name="notas"
-                  label="Notas adicionales"
-                  value={formData.notas}
-                  onChange={handleChange}
-                  multiline
-                  rows={4}
-                  fullWidth
-                  placeholder="Describe detalles específicos del cuidado..."
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-              </Box>
-
-              <Divider sx={{ my: 3 }} />
-
+          <CardContent sx={{ p: 4 }}>
+            {loadingData ? (
               <Box
                 display="flex"
-                justifyContent="flex-end"
-                gap={2}
-                sx={{ mt: 3 }}
+                justifyContent="center"
+                alignItems="center"
+                minHeight="200px"
               >
-                <Button
-                  variant="outlined"
-                  size="large"
-                  startIcon={<CancelIcon />}
-                  onClick={handleCancel}
-                  sx={{
-                    borderRadius: 2,
-                    px: 3,
-                    borderColor: "grey.400",
-                    color: "grey.700",
-                    "&:hover": {
-                      borderColor: "grey.600",
-                      backgroundColor: "grey.50",
-                    },
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  startIcon={<SaveIcon />}
-                  disabled={loading}
-                  sx={{
-                    borderRadius: 2,
-                    px: 4,
-                    bgcolor: "#4caf50",
-                    "&:hover": {
-                      bgcolor: "#388e3c",
-                    },
-                  }}
-                >
-                  {loading
-                    ? isEditing
-                      ? "Actualizando..."
-                      : "Guardando..."
-                    : isEditing
-                    ? "Actualizar Cuidado"
-                    : "Guardar Cuidado"}
-                </Button>
+                <Typography variant="h6">
+                  Cargando datos del cuidado...
+                </Typography>
               </Box>
-            </Box>
-          )}
-        </CardContent>
-      </Paper>
-    </Container>
+            ) : (
+              <Formik
+                initialValues={initialValues}
+                validationSchema={validationSchema}
+                enableReinitialize={true}
+                onSubmit={handleSubmit}
+                validateOnBlur={false}
+              >
+                {({ errors, touched, setFieldValue, values }) => (
+                  <Form>
+                    <Box sx={{ mb: 3 }}>
+                      <Field name="tipo">
+                        {({ field }: FieldProps) => (
+                          <FormControl
+                            fullWidth
+                            error={touched.tipo && !!errors.tipo}
+                            required
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                              },
+                            }}
+                          >
+                            <InputLabel>Tipo de Cuidado</InputLabel>
+                            <Select {...field} label="Tipo de Cuidado">
+                              <MenuItem value={TipoCuidado.RIEGO}>
+                                🚿 Riego
+                              </MenuItem>
+                              <MenuItem value={TipoCuidado.FERTILIZACION}>
+                                🌱 Fertilización
+                              </MenuItem>
+                              <MenuItem value={TipoCuidado.PODA}>
+                                ✂️ Poda
+                              </MenuItem>
+                              <MenuItem value={TipoCuidado.LUZ}>
+                                ☀️ Luz
+                              </MenuItem>
+                            </Select>
+                            {touched.tipo && errors.tipo && (
+                              <FormHelperText>{errors.tipo}</FormHelperText>
+                            )}
+                          </FormControl>
+                        )}
+                      </Field>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 2,
+                        mb: 3,
+                        flexDirection: { xs: "column", md: "row" },
+                      }}
+                    >
+                      <DateTimePicker
+                        label="Fecha de Inicio"
+                        value={values.fechaInicio}
+                        disablePast={!isEditing}
+                        onChange={(newValue) =>
+                          setFieldValue("fechaInicio", newValue)
+                        }
+                        format="DD/MM/YYYY HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            required: true,
+                            error: touched.fechaInicio && !!errors.fechaInicio,
+                            helperText:
+                              touched.fechaInicio && errors.fechaInicio,
+                            sx: {
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                              },
+                            },
+                          },
+                        }}
+                      />
+
+                      <DateTimePicker
+                        label="Fecha de Fin"
+                        value={values.fechaFin}
+                        disablePast={!isEditing}
+                        onChange={(newValue) =>
+                          setFieldValue("fechaFin", newValue)
+                        }
+                        format="DD/MM/YYYY HH:mm"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            required: true,
+                            error: touched.fechaFin && !!errors.fechaFin,
+                            helperText: touched.fechaFin && errors.fechaFin,
+                            sx: {
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Field name="notas">
+                        {({ field }: FieldProps) => (
+                          <TextField
+                            {...field}
+                            label="Notas adicionales"
+                            multiline
+                            rows={4}
+                            fullWidth
+                            placeholder="Describe detalles específicos del cuidado..."
+                            error={touched.notas && !!errors.notas}
+                            helperText={touched.notas && errors.notas}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                              },
+                            }}
+                          />
+                        )}
+                      </Field>
+                    </Box>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box
+                      display="flex"
+                      justifyContent="flex-end"
+                      gap={2}
+                      sx={{ mt: 3 }}
+                    >
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        startIcon={<CancelIcon />}
+                        onClick={handleCancel}
+                        sx={{
+                          borderRadius: 2,
+                          px: 3,
+                          borderColor: "grey.400",
+                          color: "grey.700",
+                          "&:hover": {
+                            borderColor: "grey.600",
+                            backgroundColor: "grey.50",
+                          },
+                        }}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        type="submit"
+                        variant="contained"
+                        size="large"
+                        startIcon={<SaveIcon />}
+                        disabled={loading}
+                        sx={{
+                          borderRadius: 2,
+                          px: 4,
+                          bgcolor: "#4caf50",
+                          "&:hover": {
+                            bgcolor: "#388e3c",
+                          },
+                        }}
+                      >
+                        {loading
+                          ? isEditing
+                            ? "Actualizando..."
+                            : "Guardando..."
+                          : isEditing
+                          ? "Actualizar Cuidado"
+                          : "Guardar Cuidado"}
+                      </Button>
+                    </Box>
+                  </Form>
+                )}
+              </Formik>
+            )}
+          </CardContent>
+        </Paper>
+      </Container>
+    </LocalizationProvider>
   );
 };
 

@@ -1,8 +1,8 @@
 export const TipoCuidado = {
-    RIEGO: "riego",
-    FERTILIZACION: "fertilizacion",
-    PODA: "poda",
-    LUZ: "luz",
+    RIEGO: "RIEGO",
+    FERTILIZACION: "FERTILIZACION",
+    PODA: "PODA",
+    LUZ: "LUZ",
 } as const;
 
 export type TipoCuidado = (typeof TipoCuidado)[keyof typeof TipoCuidado];

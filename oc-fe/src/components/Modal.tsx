@@ -8,7 +8,7 @@ import {
   Box,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import type { ModalProps } from "../types/ModalProps.type";
+import type { ModalProps } from "../interfaces/ModalProps.interface";
 
 const Modal = ({
   open,

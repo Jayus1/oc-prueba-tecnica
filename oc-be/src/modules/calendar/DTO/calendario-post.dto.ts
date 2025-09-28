@@ -1,19 +1,26 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { TipoCuidado } from "src/utils/tipoCuidado.utils";
+import { TipoCuidado } from "@prisma/client";
+import { IsInt, IsString, IsEnum, IsOptional, IsDateString } from "class-validator";
 
 export class CalendarSuggestionDto {
-    @ApiProperty()
+    @ApiProperty({ description: "Id de la planta" })
+    @IsInt()
     idPlanta: number;
 
-    @ApiProperty({ type: String, format: 'date' })
-    fechaInicio: string; // YYYY-MM-DD
+    @ApiProperty({ type: String, format: 'date', description: "Fecha de inicio del cuidado" })
+    @IsDateString()
+    fechaInicio: string;
 
-    @ApiProperty({ type: String, format: 'date' })
-    fechaFin: string; // YYYY-MM-DD
+    @ApiProperty({ type: String, format: 'date', description: "Fecha de finalizacion del cuidado" })
+    @IsDateString()
+    fechaFin: string;
 
-    @ApiProperty({ enum: TipoCuidado })
+    @ApiProperty({ enum: TipoCuidado, description: "Tipo de cuidado" })
+    @IsEnum(TipoCuidado)
     tipo: TipoCuidado;
 
-    @ApiProperty({ required: false })
-    frecuenciaDias?: number; // ej: "riego cada 3 días"
+    @ApiProperty({ required: false, description: "Fecuencia de dias" })
+    @IsOptional()
+    @IsInt()
+    frecuenciaDias?: number;
 }

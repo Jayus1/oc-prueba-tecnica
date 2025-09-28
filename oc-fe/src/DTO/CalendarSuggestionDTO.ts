@@ -1,6 +1,7 @@
 export interface CalendarSuggestionDto {
-    planta: number;
+    idPlanta: number;
     fechaInicio: Date;
     fechaFin: Date;
     tipo: string;
+    frecuenciaDias: number;
 }

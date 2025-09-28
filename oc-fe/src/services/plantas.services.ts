@@ -1,13 +1,13 @@
 import axiosConfig from "../config/axios.config";
 import type { PlantasType } from "../types/Plantas.type";
 import type { PlantasPostDto } from "../DTO/PlantasPostDTO";
+import type { PaginationParams } from "../interfaces/PaginationParams.interface";
+import type { PaginatedResponse } from "../interfaces/PaginatedResponse.interface";
 
 export const plantasService = {
-    getAllPlantas: async (nombre?: string): Promise<PlantasType[]> => {
+    getAllPlantas: async (params: PaginationParams): Promise<PaginatedResponse<PlantasType>> => {
         const response = await axiosConfig.get("/plantas", {
-            params: {
-                nombre: nombre
-            }
+            params
         });
         return response.data;
     },

@@ -1,96 +1,143 @@
-import { HttpException, HttpStatus, Inject } from "@nestjs/common";
+import { ConflictException, Inject, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../config/prisma/prisma.service";
 import { CuidadosPostDto } from "./DTO/cuidados-post.dto";
-import { TipoCuidado } from "src/utils/tipoCuidado.utils";
+import { Cuidado } from "@prisma/client";
+import { PaginatedResponseDto } from "src/DTOs/PaginatedResponse.dto";
+import { PaginationParamsDto } from "src/DTOs/PaginationParams.dto";
+import { CuidadosValidationsUtils } from "src/utils/cuidadosValidation.util";
 
 export class CuidadosService {
     constructor(@Inject(PrismaService) private prisma: PrismaService) { }
-    async getAllCuidados() {
-        return this.prisma.cuidado.findMany();
+    async getAllCuidados(filters: PaginationParamsDto): Promise<PaginatedResponseDto<Cuidado>> {
+
+        const { page = 1, limit = 10, search } = filters;
+        const skip = (page - 1) * limit;
+
+        const [data, total] = await Promise.all([
+            this.prisma.cuidado.findMany({
+                take: filters.limit,
+                skip,
+                orderBy: {
+                    id: 'desc'
+                },
+                where: {
+                    isActive: true,
+                },
+
+            }),
+            this.prisma.planta.count({
+                where: {
+                    isActive: true,
+                },
+            })
+        ]);
+
+        return {
+            data,
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        };
     }
-    async getCuidadoById(id: number) {
-        return this.prisma.cuidado.findUnique({
+    async getCuidadoById(id: number): Promise<Cuidado> {
+
+        const cuidado = await this.prisma.cuidado.findUnique({
             where: { id },
         });
+
+        if (!cuidado) {
+            throw new NotFoundException(`No se encontró el cuidado`);
+        }
+
+        return cuidado;
     }
+
+    async getCuidadosByPlantId(id: number): Promise<Cuidado[]> {
+        const plantas = await this.prisma.planta.findUnique({
+            where: {
+                id,
+                isActive: true,
+            },
+        });
+
+        if (!plantas) {
+            throw new NotFoundException(`El ID de esa planta no existe`);
+        }
+
+        const cuidado = await this.prisma.cuidado.findMany({
+            where: {
+                idPlanta: id,
+                isActive: true,
+                fechaFin: {
+                    gte: new Date()
+                }
+            },
+        });
+
+        return cuidado;
+    }
+
     async createCuidado(data: CuidadosPostDto) {
+        const validation = await CuidadosValidationsUtils.validateCuidado(
+            data.tipo,
+            data.fechaInicio.toString(),
+            data.idPlanta,
+            this.prisma,
+            data.fechaFin?.toString()
+        );
+
+        if (!validation.isValid) {
+            throw new ConflictException(validation.errorMessage);
+        }
+
         return this.prisma.cuidado.create({
             data,
         });
     }
     async updateCuidado(id: number, data: CuidadosPostDto) {
+
+        const cuidado = await this.prisma.cuidado.findUnique({
+            where: { id },
+        });
+
+        if (!cuidado) {
+            throw new NotFoundException(`No se encontró el cuidado`);
+        }
+
+        const validation = await CuidadosValidationsUtils.validateCuidado(
+            data.tipo,
+            data.fechaInicio.toString(),
+            data.idPlanta,
+            this.prisma,
+            data.fechaFin?.toString()
+        );
+
+        if (!validation.isValid) {
+            throw new ConflictException(validation.errorMessage);
+        }
+
         return this.prisma.cuidado.update({
             where: { id },
             data,
         });
     }
     async deleteCuidado(id: number) {
-        return this.prisma.cuidado.delete({
+        const cuidado = await this.prisma.cuidado.findUnique({
             where: { id },
         });
-    }
 
-    async validateRiegoTime(data: CuidadosPostDto): Promise<void> {
-        if (data.tipo !== TipoCuidado.RIEGO) return;
+        if (!cuidado) {
+            throw new NotFoundException(`No se encontró el cuidado`);
+        }
 
-        const listFertilizacion = await this.prisma.cuidado.findMany({
-            where: {
-                idPlanta: data.idPlanta,
-                tipo: { in: ['fertilizacion', 'Fertilización'] },
-                fechaInicio: {
-                    gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // últimas 24h
-                },
+        return this.prisma.cuidado.update({
+            data: {
+                isActive: false
             },
-            orderBy: { fechaInicio: 'desc' },
+            where: { id },
         });
-
-        if (listFertilizacion.length > 0) {
-            throw new HttpException(
-                'No se puede regar la planta dentro de las 24 horas posteriores a una fertilización.',
-                HttpStatus.CONFLICT,
-            );
-        }
-    }
-
-    async validateTimes(data: CuidadosPostDto): Promise<void> {
-
-        const startTime = new Date(data.fechaInicio);
-        const endTime = data.fechaFin ? new Date(data.fechaFin) : null;
-
-        if (endTime && startTime >= endTime) {
-            throw new HttpException(
-                'La fecha de inicio debe ser anterior a la fecha de fin.',
-                HttpStatus.CONFLICT,
-            );
-        }
-    }
-
-    async validateFertilizacionAndPoda(data: CuidadosPostDto): Promise<void> {
-
-        if (![TipoCuidado.PODA, TipoCuidado.FERTILIZACION].includes(data.tipo)) return;
-
-        const fecha = new Date(data.fechaInicio);
-        const startOfDay = new Date(fecha);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(fecha);
-        endOfDay.setHours(23, 59, 59, 999);
-
-        const existing = await this.prisma.cuidado.findFirst({
-            where: {
-                idPlanta: data.idPlanta,
-                tipo: data.tipo == TipoCuidado.PODA ? TipoCuidado.FERTILIZACION : TipoCuidado.PODA,
-                fechaInicio: {
-                    gte: startOfDay,
-                    lte: endOfDay
-                },
-            },
-        });
-
-        if (existing) {
-            throw new HttpException(
-                'No se puede registrar una poda o fertilización en la misma planta el mismo día.',
-                HttpStatus.BAD_REQUEST,
-            );
-        }
     }
 }
