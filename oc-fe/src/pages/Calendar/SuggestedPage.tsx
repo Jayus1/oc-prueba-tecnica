@@ -2,28 +2,29 @@ import { useState, useEffect } from "react";
 import {
   Box,
   TextField,
-  Button,
   Typography,
   Paper,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Container,
   CardContent,
   Divider,
+  FormControl,
+  InputLabel,
   FormHelperText,
+  MenuItem,
+  Select,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/es";
 import SearchIcon from "@mui/icons-material/Search";
+import PageHeader from "../../components/PageHeader";
+import CustomDateTimePicker from "../../components/CustomDateTimePicker";
+import PrimaryButton from "../../components/PrimaryButton";
+import TipoCuidadoSelect from "../../components/TipoCuidadoSelect";
 import { calendarService } from "../../services/calendar.services";
 import { plantasService } from "../../services/plantas.services";
 import type { CalendarSuggestionDto } from "../../DTO/CalendarSuggestionDTO";
 import type { PlantasType } from "../../types/Plantas.type";
-import { TipoCuidado } from "../../shared/TipoCuidado.enum";
 import { formatDate } from "../../utils/formatDate.util";
 import { Formik, Form, Field } from "formik";
 import type { FieldProps } from "formik";
@@ -135,21 +136,11 @@ const SuggestedPage = () => {
           elevation={3}
           sx={{ borderRadius: 3, overflow: "hidden", mb: 4 }}
         >
-          <Box
-            sx={{
-              background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
-              p: 4,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              📅 Sugerencias de Cuidados
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              Obtén sugerencias inteligentes para el cuidado de tus plantas
-            </Typography>
-          </Box>
+          <PageHeader
+            title="Sugerencias de Cuidados"
+            subtitle="Obtén sugerencias inteligentes para el cuidado de tus plantas"
+            icon="📅"
+          />
 
           <CardContent sx={{ p: 4 }}>
             <Formik
@@ -217,48 +208,34 @@ const SuggestedPage = () => {
                       flexDirection: { xs: "column", md: "row" },
                     }}
                   >
-                    <DateTimePicker
+                    <CustomDateTimePicker
                       label="Fecha de Inicio"
                       value={values.fechaInicio}
                       onChange={(newValue) =>
                         setFieldValue("fechaInicio", newValue)
                       }
-                      format="DD/MM/YYYY HH:mm"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          required: true,
-                          error: touched.fechaInicio && !!errors.fechaInicio,
-                          helperText: touched.fechaInicio && errors.fechaInicio,
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: 2,
-                            },
-                          },
-                        },
-                      }}
+                      error={touched.fechaInicio && !!errors.fechaInicio}
+                      helperText={
+                        touched.fechaInicio && errors.fechaInicio
+                          ? errors.fechaInicio
+                          : undefined
+                      }
+                      required
                     />
 
-                    <DateTimePicker
+                    <CustomDateTimePicker
                       label="Fecha de Fin"
                       value={values.fechaFin}
                       onChange={(newValue) =>
                         setFieldValue("fechaFin", newValue)
                       }
-                      format="DD/MM/YYYY HH:mm"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          required: true,
-                          error: touched.fechaFin && !!errors.fechaFin,
-                          helperText: touched.fechaFin && errors.fechaFin,
-                          sx: {
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: 2,
-                            },
-                          },
-                        },
-                      }}
+                      error={touched.fechaFin && !!errors.fechaFin}
+                      helperText={
+                        touched.fechaFin && errors.fechaFin
+                          ? errors.fechaFin
+                          : undefined
+                      }
+                      required
                     />
                   </Box>
 
@@ -272,33 +249,17 @@ const SuggestedPage = () => {
                   >
                     <Field name="tipo">
                       {({ field }: FieldProps) => (
-                        <FormControl
-                          fullWidth
+                        <TipoCuidadoSelect
+                          value={field.value}
+                          onChange={(value) => setFieldValue("tipo", value)}
                           error={touched.tipo && !!errors.tipo}
+                          helperText={
+                            touched.tipo && errors.tipo
+                              ? errors.tipo
+                              : undefined
+                          }
                           required
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              borderRadius: 2,
-                            },
-                          }}
-                        >
-                          <InputLabel>Tipo de Cuidado</InputLabel>
-                          <Select {...field} label="Tipo de Cuidado">
-                            <MenuItem value={TipoCuidado.RIEGO}>
-                              🚿 Riego
-                            </MenuItem>
-                            <MenuItem value={TipoCuidado.FERTILIZACION}>
-                              🌱 Fertilización
-                            </MenuItem>
-                            <MenuItem value={TipoCuidado.PODA}>
-                              ✂️ Poda
-                            </MenuItem>
-                            <MenuItem value={TipoCuidado.LUZ}>☀️ Luz</MenuItem>
-                          </Select>
-                          {touched.tipo && errors.tipo && (
-                            <FormHelperText>{errors.tipo}</FormHelperText>
-                          )}
-                        </FormControl>
+                        />
                       )}
                     </Field>
 
@@ -330,23 +291,13 @@ const SuggestedPage = () => {
                   <Divider sx={{ my: 3 }} />
 
                   <Box display="flex" justifyContent="flex-end" sx={{ mt: 3 }}>
-                    <Button
+                    <PrimaryButton
                       type="submit"
-                      variant="contained"
-                      size="large"
                       startIcon={<SearchIcon />}
                       disabled={loading}
-                      sx={{
-                        borderRadius: 2,
-                        px: 4,
-                        bgcolor: "#4caf50",
-                        "&:hover": {
-                          bgcolor: "#388e3c",
-                        },
-                      }}
                     >
                       {loading ? "Generando..." : "Generar Sugerencias"}
-                    </Button>
+                    </PrimaryButton>
                   </Box>
                 </Form>
               )}
@@ -355,18 +306,7 @@ const SuggestedPage = () => {
         </Paper>
 
         <Paper elevation={2} sx={{ borderRadius: 2, overflow: "hidden" }}>
-          <Box
-            sx={{
-              background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
-              p: 3,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h5" fontWeight="bold">
-              🌟 Fechas Sugeridas
-            </Typography>
-          </Box>
+          <PageHeader title="Fechas Sugeridas" subtitle="" icon="🌟" />
           <Box sx={{ p: 3, minHeight: 200 }}>
             {loading ? (
               <Box
@@ -400,7 +340,11 @@ const SuggestedPage = () => {
                       "&:last-child": { mb: 0 },
                     }}
                   >
-                    <Typography variant="body1" fontWeight="medium" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body1"
+                      fontWeight="medium"
+                      sx={{ mb: 0.5 }}
+                    >
                       📅 {formatDate(date)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">

@@ -10,7 +10,7 @@ export class CuidadosService {
     constructor(@Inject(PrismaService) private prisma: PrismaService) { }
     async getAllCuidados(filters: PaginationParamsDto): Promise<PaginatedResponseDto<Cuidado>> {
 
-        const { page = 1, limit = 10, search } = filters;
+        const { page = 1, limit = 10 } = filters;
         const skip = (page - 1) * limit;
 
         const [data, total] = await Promise.all([
@@ -25,7 +25,7 @@ export class CuidadosService {
                 },
 
             }),
-            this.prisma.planta.count({
+            this.prisma.cuidado.count({
                 where: {
                     isActive: true,
                 },

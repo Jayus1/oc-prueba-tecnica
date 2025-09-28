@@ -8,18 +8,16 @@ import {
   Container,
   CardContent,
   Divider,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import "dayjs/locale/es";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Cancel";
+import PageHeader from "../../components/PageHeader";
+import CustomDateTimePicker from "../../components/CustomDateTimePicker";
+import PrimaryButton from "../../components/PrimaryButton";
+import TipoCuidadoSelect from "../../components/TipoCuidadoSelect";
 import { useNavigate, useParams } from "react-router";
 import { cuidadosService } from "../../services/cuidados.services";
 import type { CuidadosPostDto } from "../../DTO/CuidadosPostDTO";
@@ -179,7 +177,6 @@ const CareForm = () => {
 
     const businessErrors = validateBusinessRules(values);
 
-    console.log("errores", businessErrors);
     if (Object.keys(businessErrors).length > 0) {
       Swal.fire({
         title: "Error de Validación",
@@ -248,23 +245,15 @@ const CareForm = () => {
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Paper elevation={3} sx={{ borderRadius: 3, overflow: "hidden" }}>
-          <Box
-            sx={{
-              background: "linear-gradient(135deg, #4caf50 0%, #388e3c 100%)",
-              color: "white",
-              p: 4,
-              textAlign: "center",
-            }}
-          >
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              {isEditing ? "✏️ Editar Cuidado" : "🌱 Agregar Nuevo Cuidado"}
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {isEditing
+          <PageHeader
+            title={isEditing ? "Editar Cuidado" : "Agregar Nuevo Cuidado"}
+            subtitle={
+              isEditing
                 ? "Modifica los datos del cuidado"
-                : "Registra un nuevo cuidado para tu planta"}
-            </Typography>
-          </Box>
+                : "Registra un nuevo cuidado para tu planta"
+            }
+            icon={isEditing ? "✏️" : "🌱"}
+          />
 
           <CardContent sx={{ p: 4 }}>
             {loadingData ? (
@@ -291,35 +280,13 @@ const CareForm = () => {
                     <Box sx={{ mb: 3 }}>
                       <Field name="tipo">
                         {({ field }: FieldProps) => (
-                          <FormControl
-                            fullWidth
+                          <TipoCuidadoSelect
+                            value={field.value}
+                            onChange={(value) => setFieldValue("tipo", value)}
                             error={touched.tipo && !!errors.tipo}
+                            helperText={touched.tipo && errors.tipo ? errors.tipo : undefined}
                             required
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
-                            }}
-                          >
-                            <InputLabel>Tipo de Cuidado</InputLabel>
-                            <Select {...field} label="Tipo de Cuidado">
-                              <MenuItem value={TipoCuidado.RIEGO}>
-                                🚿 Riego
-                              </MenuItem>
-                              <MenuItem value={TipoCuidado.FERTILIZACION}>
-                                🌱 Fertilización
-                              </MenuItem>
-                              <MenuItem value={TipoCuidado.PODA}>
-                                ✂️ Poda
-                              </MenuItem>
-                              <MenuItem value={TipoCuidado.LUZ}>
-                                ☀️ Luz
-                              </MenuItem>
-                            </Select>
-                            {touched.tipo && errors.tipo && (
-                              <FormHelperText>{errors.tipo}</FormHelperText>
-                            )}
-                          </FormControl>
+                          />
                         )}
                       </Field>
                     </Box>
@@ -332,51 +299,28 @@ const CareForm = () => {
                         flexDirection: { xs: "column", md: "row" },
                       }}
                     >
-                      <DateTimePicker
+                      <CustomDateTimePicker
                         label="Fecha de Inicio"
                         value={values.fechaInicio}
-                        disablePast={!isEditing}
                         onChange={(newValue) =>
                           setFieldValue("fechaInicio", newValue)
                         }
-                        format="DD/MM/YYYY HH:mm"
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            required: true,
-                            error: touched.fechaInicio && !!errors.fechaInicio,
-                            helperText:
-                              touched.fechaInicio && errors.fechaInicio,
-                            sx: {
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
-                            },
-                          },
-                        }}
+                        error={touched.fechaInicio && !!errors.fechaInicio}
+                        helperText={touched.fechaInicio && errors.fechaInicio ? errors.fechaInicio : undefined}
+                        required
+                        disablePast={!isEditing}
                       />
 
-                      <DateTimePicker
+                      <CustomDateTimePicker
                         label="Fecha de Fin"
                         value={values.fechaFin}
-                        disablePast={!isEditing}
                         onChange={(newValue) =>
                           setFieldValue("fechaFin", newValue)
                         }
-                        format="DD/MM/YYYY HH:mm"
-                        slotProps={{
-                          textField: {
-                            fullWidth: true,
-                            required: true,
-                            error: touched.fechaFin && !!errors.fechaFin,
-                            helperText: touched.fechaFin && errors.fechaFin,
-                            sx: {
-                              "& .MuiOutlinedInput-root": {
-                                borderRadius: 2,
-                              },
-                            },
-                          },
-                        }}
+                        error={touched.fechaFin && !!errors.fechaFin}
+                        helperText={touched.fechaFin && errors.fechaFin ? errors.fechaFin : undefined}
+                        required
+                        disablePast={!isEditing}
                       />
                     </Box>
 
@@ -391,7 +335,7 @@ const CareForm = () => {
                             fullWidth
                             placeholder="Describe detalles específicos del cuidado..."
                             error={touched.notas && !!errors.notas}
-                            helperText={touched.notas && errors.notas}
+                            helperText={touched.notas && errors.notas ? errors.notas : undefined}
                             sx={{
                               "& .MuiOutlinedInput-root": {
                                 borderRadius: 2,
@@ -428,20 +372,10 @@ const CareForm = () => {
                       >
                         Cancelar
                       </Button>
-                      <Button
+                      <PrimaryButton
                         type="submit"
-                        variant="contained"
-                        size="large"
                         startIcon={<SaveIcon />}
                         disabled={loading}
-                        sx={{
-                          borderRadius: 2,
-                          px: 4,
-                          bgcolor: "#4caf50",
-                          "&:hover": {
-                            bgcolor: "#388e3c",
-                          },
-                        }}
                       >
                         {loading
                           ? isEditing
@@ -450,7 +384,7 @@ const CareForm = () => {
                           : isEditing
                           ? "Actualizar Cuidado"
                           : "Guardar Cuidado"}
-                      </Button>
+                      </PrimaryButton>
                     </Box>
                   </Form>
                 )}
