@@ -13,12 +13,12 @@ export class CuidadosService {
             where: { id },
         });
     }
-    async createCuidado(data: { idPlanta: number; tipo: string; fechaInicio: Date; fechaFin?: Date; notas?: string }) {
+    async createCuidado(data: CuidadosPostDto) {
         return this.prisma.cuidado.create({
             data,
         });
     }
-    async updateCuidado(id: number, data: { idPlanta: number; tipo: string; fechaInicio: Date; fechaFin?: Date; notas?: string }) {
+    async updateCuidado(id: number, data: CuidadosPostDto) {
         return this.prisma.cuidado.update({
             where: { id },
             data,
@@ -49,8 +49,6 @@ export class CuidadosService {
                 'No se puede regar la planta dentro de las 24 horas posteriores a una fertilización.',
                 HttpStatus.CONFLICT,
             );
-
-
         }
     }
 
@@ -94,7 +92,5 @@ export class CuidadosService {
                 HttpStatus.BAD_REQUEST,
             );
         }
-
-
     }
 }

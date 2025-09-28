@@ -27,7 +27,7 @@ export class CuidadosController {
 
     @Put(':id')
     @ApiBody({ description: 'Editar cuidado', type: CuidadosPostDto })
-    async updateCuidado(id: number, @Body() data: CuidadosPostDto) {
+    async updateCuidado(@Param("id") id: number, @Body() data: CuidadosPostDto) {
 
         await this.cuidadosService.validateTimes(data);
         await this.cuidadosService.validateRiegoTime(data);
@@ -36,7 +36,7 @@ export class CuidadosController {
         return this.cuidadosService.updateCuidado(Number(id), data);
     }
     @Delete(':id')
-    async deleteCuidado(id: number) {
+    async deleteCuidado(@Param("id") id: number) {
         return this.cuidadosService.deleteCuidado(Number(id));
     }
 }

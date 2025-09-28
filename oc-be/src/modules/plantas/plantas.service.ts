@@ -1,19 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma/prisma.service';
 import { PlantasPostDto } from './DTO/plantas-post.dto';
+import { FilterPlantasDto } from 'src/DTO/filter-plantas.dto';
 
 @Injectable()
 export class PlantasService {
     constructor(private prisma: PrismaService) { }
-    async getAllplantas() {
+    async getAllplantas(filters?: FilterPlantasDto) {
         return this.prisma.planta.findMany({
-            include: { cuidados: true },
+            include: {
+                cuidados: {
+                    orderBy: {
+                        fechaInicio: "desc"
+                    }
+                }
+            },
+            where: {
+                nombre: {
+                    contains: filters?.nombre,
+                    mode: "insensitive"
+                }
+            },
+
+            orderBy: {
+                fechaRegistro: 'desc'
+            }
         });
     }
 
     async getPlantaById(id: number) {
         return this.prisma.planta.findUnique({
             where: { id },
+            include: { cuidados: true },
+
         });
     }
 
