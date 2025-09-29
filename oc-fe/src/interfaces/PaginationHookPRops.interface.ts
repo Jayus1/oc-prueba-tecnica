@@ -1,4 +1,4 @@
-import type { PaginationMeta } from "./PaginatedResponse.interface";
+import type { PaginationMeta } from "./paginatedResponse.interface";
 
 export default interface UsePaginationProps {
     currentPage: number;

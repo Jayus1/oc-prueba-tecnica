@@ -1,4 +1,4 @@
-import type { CuidadosType } from "../types/Cuidados.type";
+import type { CuidadosType } from "../types/cuidados.type";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -9,9 +9,9 @@ dayjs.extend(isSameOrAfter);
 export function validateEmptyTime(
   fechaInicio: Date,
   fechaFin: Date,
-  idPlanta: number,
+  idPlanta: string,
   existingCuidados: CuidadosType[],
-  excludeCuidadoId?: number
+  excludeCuidadoId?: string
 ): boolean {
   const plantaCuidados = existingCuidados.filter(
     (cuidado) =>
@@ -37,5 +37,5 @@ export function validateEmptyTime(
     }
   }
 
-  return true; // No hay conflictos, la fecha está disponible
+  return true;
 }

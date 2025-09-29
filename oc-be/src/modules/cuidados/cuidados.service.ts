@@ -1,9 +1,9 @@
 import { ConflictException, Inject, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../config/prisma/prisma.service";
-import { CuidadosPostDto } from "./DTO/cuidados-post.dto";
+import { CuidadosPostDto } from "./dtos/cuidadosPost.dto";
 import { Cuidado } from "@prisma/client";
-import { PaginatedResponseDto } from "src/DTOs/PaginatedResponse.dto";
-import { PaginationParamsDto } from "src/DTOs/PaginationParams.dto";
+import { PaginatedResponseDto } from "src/dtos/paginatedResponse.dto";
+import { PaginationParamsDto } from "src/dtos/paginationParams.dto";
 import { CuidadosValidationsUtils } from "src/utils/cuidadosValidation.util";
 
 export class CuidadosService {
@@ -42,20 +42,20 @@ export class CuidadosService {
             },
         };
     }
-    async getCuidadoById(id: number): Promise<Cuidado> {
+    async getCuidadoById(id: string): Promise<Cuidado> {
 
         const cuidado = await this.prisma.cuidado.findUnique({
             where: { id },
         });
 
-        if (!cuidado) {
+        if (!cuidado || !cuidado.isActive) {
             throw new NotFoundException(`No se encontró el cuidado`);
         }
 
         return cuidado;
     }
 
-    async getCuidadosByPlantId(id: number): Promise<Cuidado[]> {
+    async getCuidadosByPlantId(id: string): Promise<Cuidado[]> {
         const plantas = await this.prisma.planta.findUnique({
             where: {
                 id,
@@ -63,7 +63,7 @@ export class CuidadosService {
             },
         });
 
-        if (!plantas) {
+        if (!plantas || !plantas.isActive) {
             throw new NotFoundException(`El ID de esa planta no existe`);
         }
 
@@ -97,13 +97,14 @@ export class CuidadosService {
             data,
         });
     }
-    async updateCuidado(id: number, data: CuidadosPostDto) {
+
+    async updateCuidado(id: string, data: CuidadosPostDto) {
 
         const cuidado = await this.prisma.cuidado.findUnique({
             where: { id },
         });
 
-        if (!cuidado) {
+        if (!cuidado || !cuidado.isActive) {
             throw new NotFoundException(`No se encontró el cuidado`);
         }
 
@@ -112,7 +113,8 @@ export class CuidadosService {
             data.fechaInicio.toString(),
             data.idPlanta,
             this.prisma,
-            data.fechaFin?.toString()
+            data.fechaFin?.toString(),
+            id
         );
 
         if (!validation.isValid) {
@@ -124,12 +126,13 @@ export class CuidadosService {
             data,
         });
     }
-    async deleteCuidado(id: number) {
+
+    async deleteCuidado(id: string) {
         const cuidado = await this.prisma.cuidado.findUnique({
             where: { id },
         });
 
-        if (!cuidado) {
+        if (!cuidado || !cuidado.isActive) {
             throw new NotFoundException(`No se encontró el cuidado`);
         }
 

@@ -22,6 +22,9 @@ const Navbar = () => {
             color="inherit"
             aria-label="menu"
             sx={{ mr: 2 }}
+            onClick={() => {
+              navigate("/");
+            }}
           >
             <LocalFloristIcon width={10} />
           </IconButton>
@@ -35,6 +38,22 @@ const Navbar = () => {
             }}
           >
             Plantas
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => {
+              navigate("/ubicaciones");
+            }}
+          >
+            Ubicaciones
+          </Button>
+          <Button
+            color="inherit"
+            onClick={() => {
+              navigate("/especies");
+            }}
+          >
+            Especies
           </Button>
           <Button
             color="inherit"

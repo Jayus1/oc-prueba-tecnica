@@ -1,4 +1,16 @@
 services:
+  oc-fe:
+    build: 
+      context: ./oc-fe
+      dockerfile: Dockerfile
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_BACKEND_BASEURL=http://localhost:3000/api
+    depends_on:
+      - oc-be
+    networks:
+      - application-network
   oc-be:
     build: 
       context: ./oc-be

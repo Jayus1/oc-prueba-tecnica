@@ -6,8 +6,8 @@ import { IsInt, IsEnum, IsDateString, IsOptional, IsString } from "class-validat
 export class CuidadosPostDto {
 
     @ApiProperty({ description: "Id de la planta" })
-    @IsInt()
-    idPlanta: number
+    @IsString()
+    idPlanta: string
 
     @ApiProperty({ description: "Tipo de cuidado" })
     @IsEnum(TipoCuidado)

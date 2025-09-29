@@ -27,7 +27,8 @@ const CustomDateTimePicker = ({
       label={label}
       value={value}
       onChange={onChange}
-      format="DD/MM/YYYY HH:mm"
+      format="DD/MM/YYYY hh:mm A"
+      ampm={true}
       disablePast={disablePast}
       slotProps={{
         textField: {

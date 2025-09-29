@@ -1,16 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../config/prisma/prisma.service';
-import { PlantasPostDto } from './DTO/plantas-post.dto';
-import { PaginationParamsDto } from 'src/DTOs/PaginationParams.dto';
+import { PlantasPostDto } from './dtos/plantasPost.dto';
+import { PaginationParamsDto } from 'src/dtos/paginationParams.dto';
 import { Planta } from '@prisma/client';
-import { PaginatedResponseDto } from 'src/DTOs/PaginatedResponse.dto';
+import { PaginatedResponseDto } from 'src/dtos/paginatedResponse.dto';
 
 @Injectable()
 export class PlantasService {
     constructor(private prisma: PrismaService) { }
 
-    async getAllPlantasForSelect(): Promise<Planta[]> {
-        return this.prisma.planta.findMany({
+    async getAllPlantasForSelect() {
+        const result = await this.prisma.planta.findMany({
+
             where: {
                 isActive: true,
             },
@@ -20,8 +21,16 @@ export class PlantasService {
             },
             orderBy: {
                 nombre: 'asc'
-            }
+            },
         });
+
+        return result.map((p) => {
+            return {
+                ...p,
+                ubicacion: p.ubicacion?.nombre ?? "",
+                especie: p.especie.nombre
+            }
+        })
     }
 
     async getAllplantas(filters: PaginationParamsDto): Promise<PaginatedResponseDto<Planta>> {
@@ -53,7 +62,7 @@ export class PlantasService {
                 },
                 orderBy: {
                     fechaRegistro: 'desc'
-                }
+                },
             }),
             this.prisma.planta.count({
                 where: {
@@ -67,7 +76,7 @@ export class PlantasService {
         ]);
 
         return {
-            data,
+            data: data.map(p => ({ ...p, especie: p.especie.nombre, ubicacion: p.ubicacion?.nombre ?? '' })),
             meta: {
                 total,
                 page,
@@ -77,7 +86,7 @@ export class PlantasService {
         };
     }
 
-    async getPlantaById(id: number): Promise<Planta> {
+    async getPlantaById(id: string) {
         const planta = await this.prisma.planta.findUnique({
             where: { id },
             include: {
@@ -94,11 +103,15 @@ export class PlantasService {
             },
         });
 
-        if (!planta) {
-            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
+        if (!planta || !planta.isActive) {
+            throw new NotFoundException(`No se encontró la planta`);
         }
 
-        return planta;
+        return {
+            ...planta,
+            especie: planta.especie.nombre,
+            ubicacion: planta.ubicacion?.nombre ?? ''
+        };
     }
 
     async createPlanta(dto: PlantasPostDto) {
@@ -115,13 +128,13 @@ export class PlantasService {
         });
     }
 
-    async updatePlanta(id: number, dto: PlantasPostDto) {
+    async updatePlanta(id: string, dto: PlantasPostDto) {
         const plantExist = await this.prisma.planta.findUnique({
             where: { id }
         });
 
-        if (!plantExist) {
-            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
+        if (!plantExist || !plantExist) {
+            throw new NotFoundException(`No se encontró la planta`);
         }
 
         return this.prisma.planta.update({
@@ -138,13 +151,13 @@ export class PlantasService {
         });
     }
 
-    async deletePlanta(id: number) {
+    async deletePlanta(id: string) {
         const plantExist = await this.prisma.planta.findUnique({
             where: { id }
         });
 
-        if (!plantExist) {
-            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
+        if (!plantExist || !plantExist.isActive) {
+            throw new NotFoundException(`No se encontró la planta`);
         }
 
         return this.prisma.planta.update({

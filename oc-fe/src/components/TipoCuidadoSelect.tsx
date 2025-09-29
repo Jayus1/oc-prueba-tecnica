@@ -5,7 +5,7 @@ import {
   MenuItem,
   FormHelperText,
 } from "@mui/material";
-import { TipoCuidado } from "../shared/TipoCuidado.enum";
+import { TipoCuidado } from "../shared/tipoCuidado.enum";
 
 interface TipoCuidadoSelectProps {
   value: string;
@@ -43,18 +43,10 @@ const TipoCuidadoSelect = ({
         onChange={(e) => onChange(e.target.value)}
         label={label}
       >
-        <MenuItem value={TipoCuidado.RIEGO}>
-          🚿 Riego
-        </MenuItem>
-        <MenuItem value={TipoCuidado.FERTILIZACION}>
-          🌱 Fertilización
-        </MenuItem>
-        <MenuItem value={TipoCuidado.PODA}>
-          ✂️ Poda
-        </MenuItem>
-        <MenuItem value={TipoCuidado.LUZ}>
-          ☀️ Luz
-        </MenuItem>
+        <MenuItem value={TipoCuidado.RIEGO}>🚿 Riego</MenuItem>
+        <MenuItem value={TipoCuidado.FERTILIZACION}>🌱 Fertilización</MenuItem>
+        <MenuItem value={TipoCuidado.PODA}>✂️ Poda</MenuItem>
+        <MenuItem value={TipoCuidado.LUZ}>☀️ Luz</MenuItem>
       </Select>
       {helperText && <FormHelperText>{helperText}</FormHelperText>}
     </FormControl>

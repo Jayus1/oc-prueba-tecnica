@@ -1,8 +1,8 @@
-import axiosConfig from "../config/axios.config";
-import type { CuidadosPostDto } from "../DTO/CuidadosPostDTO";
-import type { CuidadosType } from "../types/Cuidados.type";
-import type { PaginationParams } from "../interfaces/PaginationParams.interface";
-import type { PaginatedResponse } from "../interfaces/PaginatedResponse.interface";
+import axiosConfig from "../settings/axios.config";
+import type { CuidadosType } from "../types/cuidados.type";
+import type { PaginationParams } from "../interfaces/paginationParams.interface";
+import type { PaginatedResponse } from "../interfaces/paginatedResponse.interface";
+import type { CuidadosPostDto } from "../dtos/cuidadosPost.dto";
 
 export const cuidadosService = {
     getAllCuidados: async (params?: PaginationParams): Promise<PaginatedResponse<CuidadosType>> => {
@@ -12,13 +12,12 @@ export const cuidadosService = {
             });
             return response.data;
         } else {
-            // Mantener compatibilidad con código existente que no usa paginación
             const response = await axiosConfig.get("/cuidados");
             return response.data;
         }
     },
 
-    getCuidadoById: async (id: number): Promise<CuidadosType> => {
+    getCuidadoById: async (id: string): Promise<CuidadosType> => {
         const response = await axiosConfig.get(`/cuidados/${id}`);
         return response.data;
     },
@@ -29,16 +28,16 @@ export const cuidadosService = {
         return response.data;
     },
 
-    updateCuidado: async (id: number, data: CuidadosPostDto): Promise<CuidadosType> => {
+    updateCuidado: async (id: string, data: CuidadosPostDto): Promise<CuidadosType> => {
         const response = await axiosConfig.put(`/cuidados/${id}`, data);
         return response.data;
     },
 
-    deleteCuidado: async (id: number): Promise<void> => {
+    deleteCuidado: async (id: string): Promise<void> => {
         await axiosConfig.delete(`/cuidados/${id}`);
     },
 
-    getCuidadosByPlantId: async (plantId: number): Promise<CuidadosType[]> => {
+    getCuidadosByPlantId: async (plantId: string): Promise<CuidadosType[]> => {
         const response = await axiosConfig.get(`/cuidados/planta/${plantId}`);
         return response.data;
     },

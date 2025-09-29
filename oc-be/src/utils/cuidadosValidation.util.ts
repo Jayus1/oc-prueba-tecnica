@@ -1,14 +1,15 @@
 import { TipoCuidado } from "@prisma/client";
 import { PrismaService } from "src/config/prisma/prisma.service";
-import { ValidationResult } from "src/DTOs/Cuidados-Validations.dto";
+import { ValidationResult } from "src/dtos/cuidadosValidations.dto";
 
 export class CuidadosValidationsUtils {
 
     static async validateEmptyTime(
         fechaInicio: string,
         prisma: PrismaService,
-        idPlanta: number,
+        idPlanta: string,
         fechaFin?: string,
+        idExclude?: string
     ): Promise<ValidationResult> {
         if (!fechaFin) {
             return { isValid: true };
@@ -26,6 +27,9 @@ export class CuidadosValidationsUtils {
 
         const cuidadoExistente = await prisma.cuidado.findFirst({
             where: {
+                NOT: idExclude ? {
+                    id: idExclude
+                } : undefined,
                 isActive: true,
                 idPlanta,
                 OR: [
@@ -76,7 +80,7 @@ export class CuidadosValidationsUtils {
     static async validateRiegoTime(
         tipo: TipoCuidado,
         fechaInicio: string,
-        idPlanta: number,
+        idPlanta: string,
         prisma: PrismaService
     ): Promise<ValidationResult> {
         if (tipo !== TipoCuidado.RIEGO) return { isValid: true };
@@ -109,7 +113,7 @@ export class CuidadosValidationsUtils {
     static async validateFertilizacionAndPoda(
         tipo: TipoCuidado,
         fechaInicio: string,
-        idPlanta: number,
+        idPlanta: string,
         prisma: PrismaService
     ): Promise<ValidationResult> {
         if (tipo === TipoCuidado.LUZ || tipo === TipoCuidado.RIEGO) {
@@ -146,15 +150,16 @@ export class CuidadosValidationsUtils {
     static async validateCuidado(
         tipo: TipoCuidado,
         fechaInicio: string,
-        idPlanta: number,
+        idPlanta: string,
         prisma: PrismaService,
-        fechaFin?: string
+        fechaFin?: string,
+        idExclude?: string
     ): Promise<ValidationResult> {
         const dateValidation = this.validateDates(fechaInicio, fechaFin);
         if (!dateValidation.isValid) return dateValidation;
 
 
-        const emptyTimeValidacion = await this.validateEmptyTime(fechaInicio, prisma, idPlanta, fechaFin);
+        const emptyTimeValidacion = await this.validateEmptyTime(fechaInicio, prisma, idPlanta, fechaFin, idExclude);
         if (!emptyTimeValidacion.isValid) return emptyTimeValidacion
 
 

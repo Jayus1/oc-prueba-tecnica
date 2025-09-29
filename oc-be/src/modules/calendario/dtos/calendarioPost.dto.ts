@@ -4,8 +4,8 @@ import { IsInt, IsString, IsEnum, IsOptional, IsDateString } from "class-validat
 
 export class CalendarSuggestionDto {
     @ApiProperty({ description: "Id de la planta" })
-    @IsInt()
-    idPlanta: number;
+    @IsString()
+    idPlanta: string;
 
     @ApiProperty({ type: String, format: 'date', description: "Fecha de inicio del cuidado" })
     @IsDateString()

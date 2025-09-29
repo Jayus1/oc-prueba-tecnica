@@ -1,18 +1,19 @@
-import axiosConfig from "../config/axios.config";
-import type { PlantasType } from "../types/Plantas.type";
-import type { PlantasPostDto } from "../DTO/PlantasPostDTO";
-import type { PaginationParams } from "../interfaces/PaginationParams.interface";
-import type { PaginatedResponse } from "../interfaces/PaginatedResponse.interface";
+import axiosConfig from "../settings/axios.config";
+import type { PlantasType } from "../types/plantas.type";
+import type { PlantasPostDto } from "../dtos/plantasPost.dto";
+import type { PaginationParams } from "../interfaces/paginationParams.interface";
+import type { PaginatedResponse } from "../interfaces/paginatedResponse.interface";
 
 export const plantasService = {
     getAllPlantas: async (params: PaginationParams): Promise<PaginatedResponse<PlantasType>> => {
         const response = await axiosConfig.get("/plantas", {
             params
         });
+
         return response.data;
     },
 
-    getPlantaById: async (id: number): Promise<PlantasType> => {
+    getPlantaById: async (id: string): Promise<PlantasType> => {
         const response = await axiosConfig.get(`/plantas/${id}`);
         return response.data;
     },
@@ -22,12 +23,12 @@ export const plantasService = {
         return response.data;
     },
 
-    updatePlanta: async (id: number, data: PlantasPostDto): Promise<PlantasType> => {
+    updatePlanta: async (id: string, data: PlantasPostDto): Promise<PlantasType> => {
         const response = await axiosConfig.put(`/plantas/${id}`, data);
         return response.data;
     },
 
-    deletePlanta: async (id: number): Promise<void> => {
+    deletePlanta: async (id: string): Promise<void> => {
         await axiosConfig.delete(`/plantas/${id}`);
     },
 

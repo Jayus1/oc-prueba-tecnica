@@ -7,10 +7,10 @@ import Typography from "@mui/material/Typography";
 import { CardHeader, Avatar } from "@mui/material";
 import LocalFloristIcon from "@mui/icons-material/LocalFlorist";
 import DeleteIcon from "@mui/icons-material/Delete";
-import type { PlantCardType } from "../interfaces/PlantCard.interface";
 import { useNavigate } from "react-router";
-import { plantasService } from "../services/plantas.services";
 import Swal from "sweetalert2";
+import { plantasService } from "../services/plantas.services";
+import type { PlantCardType } from "../interfaces/PlantCard.interface";
 
 export default function PlantCard({
   id,

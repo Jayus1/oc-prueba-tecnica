@@ -20,8 +20,8 @@ import PrimaryButton from "../../components/PrimaryButton";
 import TipoCuidadoSelect from "../../components/TipoCuidadoSelect";
 import { useNavigate, useParams } from "react-router";
 import { cuidadosService } from "../../services/cuidados.services";
-import type { CuidadosPostDto } from "../../DTO/CuidadosPostDTO";
-import type { CuidadosType } from "../../types/Cuidados.type";
+import type { CuidadosPostDto } from "../../dtos/cuidadosPost.dto";
+import type { CuidadosType } from "../../types/cuidados.type";
 import { validateFertilizacionAndPoda } from "../../utils/validateSameTime";
 import { validateRiegoTime } from "../../utils/validateRiegoTime";
 import { Formik, Form, Field } from "formik";
@@ -77,7 +77,7 @@ const CareForm = () => {
 
     setLoadingData(true);
     try {
-      const cuidadoData = await cuidadosService.getCuidadoById(parseInt(id));
+      const cuidadoData = await cuidadosService.getCuidadoById(id);
       const newInitialValues = {
         tipo: cuidadoData.tipo,
         fechaInicio: dayjs(cuidadoData.fechaInicio),
@@ -101,9 +101,7 @@ const CareForm = () => {
     if (!plantId) return;
 
     try {
-      const response = await cuidadosService.getCuidadosByPlantId(
-        Number(plantId)
-      );
+      const response = await cuidadosService.getCuidadosByPlantId(plantId);
 
       setExistingCuidados(response);
     } catch (error) {
@@ -131,10 +129,10 @@ const CareForm = () => {
     if (values.tipo && values.fechaInicio && values.fechaFin && plantId) {
       const fechaInicio = values.fechaInicio.toDate();
       const fechaFin = values.fechaFin.toDate();
-      const idPlantaNum = parseInt(plantId);
+      const idPlantaNum = plantId;
 
       const cuidadosParaValidar = existingCuidados.filter((c) =>
-        isEditing ? c.id !== parseInt(id!) : true
+        isEditing ? c.id !== id! : true
       );
 
       if (
@@ -143,7 +141,7 @@ const CareForm = () => {
           fechaFin,
           idPlantaNum,
           cuidadosParaValidar,
-          isEditing ? parseInt(id!) : undefined
+          isEditing ? id! : undefined
         )
       ) {
         errors.fechaInicio =
@@ -209,11 +207,11 @@ const CareForm = () => {
         fechaInicio: values.fechaInicio.toDate(),
         fechaFin: values.fechaFin.toDate(),
         notas: values.notas,
-        idPlanta: parseInt(plantId),
+        idPlanta: plantId,
       };
 
       if (isEditing) {
-        await cuidadosService.updateCuidado(parseInt(id!), cuidadoData);
+        await cuidadosService.updateCuidado(id!, cuidadoData);
         Swal.fire({
           title: "¡Actualizado!",
           text: "El cuidado ha sido actualizado correctamente.",
@@ -303,7 +301,6 @@ const CareForm = () => {
                                 ? errors.tipo
                                 : undefined
                             }
-                            required
                           />
                         )}
                       </Field>
@@ -329,7 +326,6 @@ const CareForm = () => {
                             ? errors.fechaInicio
                             : undefined
                         }
-                        required
                         disablePast={!isEditing}
                       />
 
@@ -345,7 +341,6 @@ const CareForm = () => {
                             ? errors.fechaFin
                             : undefined
                         }
-                        required
                         disablePast={!isEditing}
                       />
                     </Box>

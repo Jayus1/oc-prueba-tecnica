@@ -12,6 +12,7 @@ import {
   FormHelperText,
   MenuItem,
   Select,
+  Pagination,
 } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -23,8 +24,10 @@ import PrimaryButton from "../../components/PrimaryButton";
 import TipoCuidadoSelect from "../../components/TipoCuidadoSelect";
 import { calendarService } from "../../services/calendar.services";
 import { plantasService } from "../../services/plantas.services";
-import type { CalendarSuggestionDto } from "../../DTO/CalendarSuggestionDTO";
-import type { PlantasType } from "../../types/Plantas.type";
+import type { CalendarSuggestionDto } from "../../dtos/calendarSuggestion.dto";
+import type { PlantasType } from "../../types/plantas.type";
+import type { PaginatedResponse } from "../../interfaces/paginatedResponse.interface";
+import { usePagination } from "../../hooks/usePagination";
 import { formatDate } from "../../utils/formatDate.util";
 import { Formik, Form, Field } from "formik";
 import type { FieldProps } from "formik";
@@ -34,7 +37,6 @@ import dayjs from "dayjs";
 
 dayjs.locale("es");
 
-// Schema de validación con Yup
 const validationSchema = Yup.object({
   planta: Yup.string().required("Debe seleccionar una planta"),
   fechaInicio: Yup.date()
@@ -60,6 +62,11 @@ const SuggestedPage = () => {
   const [loading, setLoading] = useState(false);
   const [plantas, setPlantas] = useState<PlantasType[]>([]);
   const [loadingPlantas, setLoadingPlantas] = useState(false);
+  const [lastSearchData, setLastSearchData] =
+    useState<CalendarSuggestionDto | null>(null);
+
+  const { currentPage, paginationMeta, setPaginationMeta, setCurrentPage } =
+    usePagination(10);
 
   const initialValues = {
     planta: "",
@@ -93,20 +100,24 @@ const SuggestedPage = () => {
   const handleSubmit = async (values: any) => {
     setLoading(true);
     setSuggestedDates([]);
+    setCurrentPage(1);
 
     try {
       const suggestionData: CalendarSuggestionDto = {
-        idPlanta: parseInt(values.planta),
+        idPlanta: values.planta,
         fechaInicio: values.fechaInicio.format("YYYY-MM-DD"),
         fechaFin: values.fechaFin.format("YYYY-MM-DD"),
         tipo: values.tipo,
         frecuenciaDias: values.frecuenciaDias,
       };
 
-      const response = await calendarService.getSuggestions(suggestionData);
-      setSuggestedDates(response);
+      setLastSearchData(suggestionData);
+      const response: PaginatedResponse<string> =
+        await calendarService.getSuggestions(suggestionData, 1);
+      setSuggestedDates(response.data);
+      setPaginationMeta(response.meta);
 
-      if (response.length === 0) {
+      if (response.data.length === 0) {
         Swal.fire({
           title: "Sin sugerencias",
           text: "No se encontraron fechas sugeridas para los criterios seleccionados.",
@@ -114,6 +125,31 @@ const SuggestedPage = () => {
           confirmButtonText: "OK",
         });
       }
+    } catch (error) {
+      Swal.fire({
+        title: "Error",
+        text: "Error al obtener las sugerencias. Por favor, intenta nuevamente.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePaginationChange = async (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    if (!lastSearchData) return;
+
+    setLoading(true);
+    setCurrentPage(value);
+
+    try {
+      const response: PaginatedResponse<string> =
+        await calendarService.getSuggestions(lastSearchData, value);
+      setSuggestedDates(response.data);
     } catch (error) {
       Swal.fire({
         title: "Error",
@@ -323,7 +359,8 @@ const SuggestedPage = () => {
                   color="text.secondary"
                   sx={{ mb: 2 }}
                 >
-                  Se encontraron {suggestedDates.length} fechas sugeridas:
+                  Mostrando {suggestedDates.length} de{" "}
+                  {paginationMeta?.total || 0} fechas sugeridas:
                 </Typography>
                 {suggestedDates.map((date, index) => (
                   <Paper
@@ -349,6 +386,20 @@ const SuggestedPage = () => {
                     </Typography>
                   </Paper>
                 ))}
+
+                {!loading &&
+                  suggestedDates.length > 0 &&
+                  (paginationMeta?.totalPages || 0) > 1 && (
+                    <Box display="flex" justifyContent="center" mt={3}>
+                      <Pagination
+                        count={paginationMeta?.totalPages || 0}
+                        page={currentPage}
+                        onChange={handlePaginationChange}
+                        color="primary"
+                        size="large"
+                      />
+                    </Box>
+                  )}
               </Box>
             ) : (
               <Box

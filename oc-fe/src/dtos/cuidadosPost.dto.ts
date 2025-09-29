@@ -1,5 +1,5 @@
 export interface CuidadosPostDto {
-    idPlanta: number;
+    idPlanta: string;
     tipo: string;
     fechaInicio: Date;
     fechaFin: Date;

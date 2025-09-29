@@ -3,7 +3,9 @@ import ListPlantPage from "../pages/Plantas/ListPlantsPage";
 import PlantsDetailsPage from "../pages/Plantas/PlantsDetailsPage";
 import CareForm from "../pages/Plantas/CaresForm";
 import SuggestedPage from "../pages/Calendar/SuggestedPage";
-import MainLayout from "../layout/MainLayout";
+import UbicacionesPage from "../pages/Ubicaciones/UbicacionesPage";
+import EspeciesPage from "../pages/Especies/EspeciesPage";
+import MainLayout from "../layouts/MainLayout";
 
 const AppRouter = () => {
   return (
@@ -14,6 +16,8 @@ const AppRouter = () => {
         <Route path="/plants/:plantId/care" element={<CareForm />} />
         <Route path="/plants/:plantId/care/:id" element={<CareForm />} />
         <Route path="/calendar-recommendation" element={<SuggestedPage />} />
+        <Route path="/ubicaciones" element={<UbicacionesPage />} />
+        <Route path="/especies" element={<EspeciesPage />} />
       </Route>
     </Routes>
   );

@@ -1,8 +1,7 @@
 export interface PlantCardType {
-    id: number;
+    id: string;
     nombre: string;
     especie: string;
     ubicacion: string;
     onDelete?: () => void;
-
 };

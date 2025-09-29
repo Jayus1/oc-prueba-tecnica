@@ -21,30 +21,28 @@ enum TipoCuidado {
 }
 
 model Planta {
-  id     Int    @id @default(autoincrement())
-  nombre String
+  id            String   @id @default(uuid())
+  nombre        String
+  idEspecie     String   @map("id_especie")
+  idUbicacion   String?  @map("id_ubicacion")
+  fechaRegistro DateTime @default(now()) @map("fecha_registro")
+  isActive      Boolean  @default(true) @map("is_active")
 
-  idEspecie Int
-  especie   Especie @relation(fields: [idEspecie], references: [id])
-
-  idUbicacion Int?
-  ubicacion   Ubicacion? @relation(fields: [idUbicacion], references: [id])
-
-  fechaRegistro DateTime  @default(now()) @map("fecha_registro")
-  isActive      Boolean   @default(true)
-  cuidados      Cuidado[]
+  especie   Especie    @relation(fields: [idEspecie], references: [id])
+  ubicacion Ubicacion? @relation(fields: [idUbicacion], references: [id])
+  cuidados  Cuidado[]
 
   @@map("plantas")
 }
 
 model Cuidado {
-  id          Int         @id @default(autoincrement())
-  idPlanta    Int         @map("id_planta")
+  id          String      @id @default(uuid())
+  idPlanta    String      @map("id_planta")
   tipo        TipoCuidado
   fechaInicio DateTime    @map("fecha_inicio")
   fechaFin    DateTime?   @map("fecha_fin")
   notas       String?
-  isActive    Boolean     @default(true)
+  isActive    Boolean     @default(true) @map("is_active")
 
   planta Planta @relation(fields: [idPlanta], references: [id], onDelete: Cascade)
 
@@ -52,24 +50,28 @@ model Cuidado {
 }
 
 model Especie {
-  id               Int      @id @default(autoincrement())
+  id               String   @id @default(uuid())
   nombre           String
-  nombreCientifico String?
+  nombreCientifico String?  @map("nombre_cientifico")
   descripcion      String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  plantas          Planta[]
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  isActive         Boolean  @default(true) @map("is_active")
+
+  plantas Planta[]
 
   @@map("especies")
 }
 
 model Ubicacion {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   nombre      String
   descripcion String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  plantas     Planta[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  isActive    Boolean  @default(true) @map("is_active")
+
+  plantas Planta[]
 
   @@map("ubicaciones")
 }

@@ -1,6 +1,6 @@
 export type CuidadosType = {
-    id: number,
-    idPlanta: number,
+    id: string,
+    idPlanta: string,
     tipo: string,
     fechaInicio: Date,
     fechaFin?: Date,

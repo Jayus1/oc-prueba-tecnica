@@ -1,0 +1,2 @@
+- Ejecutar "docker-compose up"
+- Una vez los 3 proyectos esten corriendo acceder a http://localhost:4173

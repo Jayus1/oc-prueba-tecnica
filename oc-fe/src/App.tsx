@@ -1,8 +1,8 @@
 import { BrowserRouter } from "react-router";
 // import "./App.css";
-import AppRouter from "./config/AppRoutes";
+import AppRouter from "./settings/AppRoutes";
 import { ThemeProvider } from "@emotion/react";
-import theme from "./config/theme";
+import theme from "./settings/theme";
 
 function App() {
   return (

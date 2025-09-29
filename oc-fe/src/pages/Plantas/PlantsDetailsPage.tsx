@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import type { PlantasType } from "../../types/Plantas.type";
+import type { PlantasType } from "../../types/plantas.type";
 import { plantasService } from "../../services/plantas.services";
-import { cuidadosService } from "../../services/cuidados.services";
 import {
   Box,
   Typography,
@@ -21,6 +20,7 @@ import { useNavigate, useParams } from "react-router";
 import { formatDate } from "../../utils/formatDate.util";
 import { formatTipoCuidado } from "../../utils/tipoCuidado.util";
 import Swal from "sweetalert2";
+import { cuidadosService } from "../../services/cuidados.services";
 
 const PlantsDetailsPage = () => {
   const { id } = useParams();
@@ -29,6 +29,12 @@ const PlantsDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigation = useNavigate();
+
+  const isExpired = (fechaFin: string) => {
+    const today = new Date();
+    const endDate = new Date(fechaFin);
+    return endDate < today;
+  };
 
   const fetchPlanta = async () => {
     if (!id) {
@@ -40,33 +46,33 @@ const PlantsDetailsPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const plantaData = await plantasService.getPlantaById(parseInt(id));
+      const plantaData = await plantasService.getPlantaById(id);
       setPlanta(plantaData);
     } catch (error) {
       console.error("Error fetching planta:", error);
       setError("Error al cargar la planta");
 
       Swal.fire({
-        title: 'Error',
-        text: 'No se pudo cargar la información de la planta. Por favor, intenta de nuevo.',
-        icon: 'error',
-        confirmButtonText: 'OK'
+        title: "Error",
+        text: "No se pudo cargar la información de la planta. Por favor, intenta de nuevo.",
+        icon: "error",
+        confirmButtonText: "OK",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteCuidado = async (cuidadoId: number) => {
+  const handleDeleteCuidado = async (cuidadoId: string) => {
     const result = await Swal.fire({
-      title: '¿Estás seguro?',
-      text: '¿Quieres eliminar este cuidado?',
-      icon: 'warning',
+      title: "¿Estás seguro?",
+      text: "¿Quieres eliminar este cuidado?",
+      icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
     });
 
     if (result.isConfirmed) {
@@ -75,18 +81,18 @@ const PlantsDetailsPage = () => {
         await fetchPlanta();
 
         Swal.fire({
-          title: '¡Eliminado!',
-          text: 'El cuidado ha sido eliminado correctamente.',
-          icon: 'success',
+          title: "¡Eliminado!",
+          text: "El cuidado ha sido eliminado correctamente.",
+          icon: "success",
           timer: 2000,
-          showConfirmButton: false
+          showConfirmButton: false,
         });
       } catch (error) {
         Swal.fire({
-          title: 'Error',
-          text: 'No se pudo eliminar el cuidado. Por favor, inténta de nuevo.',
-          icon: 'error',
-          confirmButtonText: 'OK'
+          title: "Error",
+          text: "No se pudo eliminar el cuidado. Por favor, inténta de nuevo.",
+          icon: "error",
+          confirmButtonText: "OK",
         });
       }
     }
@@ -244,34 +250,45 @@ const PlantsDetailsPage = () => {
                     <TableCell>{formatDate(cuidado.fechaFin)}</TableCell>
                     <TableCell>{cuidado.notas}</TableCell>
                     <TableCell>
-                      <Box display="flex" gap={1}>
-                        <IconButton
-                          color="primary"
-                          size="small"
-                          onClick={() => navigation(`/plants/${id}/care/${cuidado.id}`)}
-                          sx={{
-                            "&:hover": {
-                              backgroundColor: "primary.light",
-                              color: "white",
-                            },
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          color="error"
-                          size="small"
-                          onClick={() => handleDeleteCuidado(cuidado.id)}
-                          sx={{
-                            "&:hover": {
-                              backgroundColor: "error.light",
-                              color: "white",
-                            },
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
+                      {!isExpired(
+                        cuidado.fechaFin?.toString() ??
+                          cuidado.fechaInicio.toString()
+                      ) ? (
+                        <Box display="flex" gap={1}>
+                          <IconButton
+                            color="primary"
+                            size="small"
+                            onClick={() =>
+                              navigation(`/plants/${id}/care/${cuidado.id}`)
+                            }
+                            sx={{
+                              "&:hover": {
+                                backgroundColor: "primary.light",
+                                color: "white",
+                              },
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton
+                            color="error"
+                            size="small"
+                            onClick={() => handleDeleteCuidado(cuidado.id)}
+                            sx={{
+                              "&:hover": {
+                                backgroundColor: "error.light",
+                                color: "white",
+                              },
+                            }}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">
+                          Cuidado finalizado
+                        </Typography>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

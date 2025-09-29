@@ -1,7 +1,7 @@
-import type { CuidadosType } from "./Cuidados.type";
+import type { CuidadosType } from "./cuidados.type";
 
 export type PlantasType = {
-    id: number,
+    id: string,
     nombre: string,
     especie: string,
     ubicacion: string,

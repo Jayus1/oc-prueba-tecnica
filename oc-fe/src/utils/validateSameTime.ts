@@ -1,11 +1,11 @@
-import { TipoCuidado } from "../shared/TipoCuidado.enum";
-import type { CuidadosType } from "../types/Cuidados.type";
+import { TipoCuidado } from "../shared/tipoCuidado.enum";
+import type { CuidadosType } from "../types/cuidados.type";
 
 
 export const validateFertilizacionAndPoda = (
     tipo: string,
     fechaInicio: Date,
-    idPlanta: number,
+    idPlanta: string,
     existingCuidados: CuidadosType[]
 ): boolean => {
     if (tipo === TipoCuidado.LUZ) return true;

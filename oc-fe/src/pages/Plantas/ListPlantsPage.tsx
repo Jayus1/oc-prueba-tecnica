@@ -1,5 +1,5 @@
 import { Box, Button, TextField, Typography, Pagination } from "@mui/material";
-import type { PlantasType } from "../../types/Plantas.type";
+import type { PlantasType } from "../../types/plantas.type";
 import { useState, useEffect } from "react";
 import PlantCard from "../../components/PlantCard";
 import CreatePlantModal from "./Modals/CreatePlantModal";

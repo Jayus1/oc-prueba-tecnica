@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Delete, Put, Body, Param, Query, HttpCode, HttpStatus } from "@nestjs/common";
 import { PlantasService } from './plantas.service';
 import { ApiBody } from "@nestjs/swagger";
-import { PlantasPostDto } from "./DTO/plantas-post.dto";
-import { PaginationParamsDto } from "src/DTOs/PaginationParams.dto";
-import { PaginatedResponseDto } from "src/DTOs/PaginatedResponse.dto";
+import { PlantasPostDto } from "./dtos/plantasPost.dto";
+import { PaginationParamsDto } from "src/dtos/paginationParams.dto";
+import { PaginatedResponseDto } from "src/dtos/paginatedResponse.dto";
 import { Planta } from "@prisma/client";
 
 
@@ -21,8 +21,8 @@ export class PlantasController {
     }
 
     @Get(':id')
-    async getplantaById(@Param("id") id: number) {
-        return this.plantasService.getPlantaById(Number(id));
+    async getplantaById(@Param("id") id: string) {
+        return this.plantasService.getPlantaById(id);
     }
 
     @Post()
@@ -34,12 +34,12 @@ export class PlantasController {
 
     @Put(':id')
     @ApiBody({ description: 'Editar planta', type: PlantasPostDto })
-    async updateplanta(@Param("id") id: number, @Body() data: PlantasPostDto) {
-        return this.plantasService.updatePlanta(Number(id), data);
+    async updateplanta(@Param("id") id: string, @Body() data: PlantasPostDto) {
+        return this.plantasService.updatePlanta(id, data);
     }
 
     @Delete(':id')
-    async deleteplanta(@Param("id") id: number) {
-        return this.plantasService.deletePlanta(Number(id));
+    async deleteplanta(@Param("id") id: string) {
+        return this.plantasService.deletePlanta(id);
     }
 }
