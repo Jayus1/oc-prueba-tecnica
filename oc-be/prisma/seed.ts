@@ -2,11 +2,11 @@ import { PrismaClient, Planta, Cuidado, TipoCuidado } from '@prisma/client'
 const prisma = new PrismaClient()
 
 const plantasData: Planta[] = [
-    { id: 1, nombre: 'Rosa', especie: 'Rosa', fechaRegistro: new Date('2023-01-15'), ubicacion: 'Jardín Frontal', isActive: true },
-    { id: 2, nombre: 'Tulipán', especie: 'Tulipa', fechaRegistro: new Date('2023-02-20'), ubicacion: 'Jardín Trasero', isActive: true },
-    { id: 3, nombre: 'Girasol', especie: 'Helianthus', fechaRegistro: new Date('2023-03-10'), ubicacion: 'Huerto', isActive: true },
-    { id: 4, nombre: 'Lavanda', especie: 'Lavandula', fechaRegistro: new Date('2023-04-05'), ubicacion: 'Jardín de Aromáticas', isActive: true },
-    { id: 5, nombre: 'Cactus', especie: 'Cactaceae', fechaRegistro: new Date('2023-05-12'), ubicacion: 'Interior', isActive: true },
+    { id: 1, nombre: 'Rosa', idEspecie: 1, fechaRegistro: new Date('2023-01-15'), idUbicacion: 1, isActive: true },
+    { id: 2, nombre: 'Tulipán', idEspecie: 1, fechaRegistro: new Date('2023-02-20'), idUbicacion: 1, isActive: true },
+    { id: 3, nombre: 'Girasol', idEspecie: 1, fechaRegistro: new Date('2023-03-10'), idUbicacion: 1, isActive: true },
+    { id: 4, nombre: 'Lavanda', idEspecie: 1, fechaRegistro: new Date('2023-04-05'), idUbicacion: 1, isActive: true },
+    { id: 5, nombre: 'Cactus', idEspecie: 1, fechaRegistro: new Date('2023-05-12'), idUbicacion: 1, isActive: true },
 ]
 
 const cuidadosData: Cuidado[] = [

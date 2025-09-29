@@ -21,10 +21,15 @@ enum TipoCuidado {
 }
 
 model Planta {
-  id            Int       @id @default(autoincrement())
-  nombre        String
-  especie       String
-  ubicacion     String?
+  id     Int    @id @default(autoincrement())
+  nombre String
+
+  idEspecie Int
+  especie   Especie @relation(fields: [idEspecie], references: [id])
+
+  idUbicacion Int?
+  ubicacion   Ubicacion? @relation(fields: [idUbicacion], references: [id])
+
   fechaRegistro DateTime  @default(now()) @map("fecha_registro")
   isActive      Boolean   @default(true)
   cuidados      Cuidado[]
@@ -44,4 +49,27 @@ model Cuidado {
   planta Planta @relation(fields: [idPlanta], references: [id], onDelete: Cascade)
 
   @@map("cuidados")
+}
+
+model Especie {
+  id               Int      @id @default(autoincrement())
+  nombre           String
+  nombreCientifico String?
+  descripcion      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  plantas          Planta[]
+
+  @@map("especies")
+}
+
+model Ubicacion {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  plantas     Planta[]
+
+  @@map("ubicaciones")
 }

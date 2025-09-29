@@ -14,7 +14,10 @@ export class PlantasService {
             where: {
                 isActive: true,
             },
-
+            include: {
+                especie: true,
+                ubicacion: true,
+            },
             orderBy: {
                 nombre: 'asc'
             }
@@ -30,7 +33,12 @@ export class PlantasService {
                 take: filters.limit,
                 skip,
                 include: {
+                    especie: true,
+                    ubicacion: true,
                     cuidados: {
+                        where: {
+                            isActive: true
+                        },
                         orderBy: {
                             fechaInicio: "desc"
                         }
@@ -43,7 +51,6 @@ export class PlantasService {
                         mode: "insensitive"
                     }
                 },
-
                 orderBy: {
                     fechaRegistro: 'desc'
                 }
@@ -71,75 +78,83 @@ export class PlantasService {
     }
 
     async getPlantaById(id: number): Promise<Planta> {
-
         const planta = await this.prisma.planta.findUnique({
             where: { id },
             include: {
+                especie: true,
+                ubicacion: true,
                 cuidados: {
                     where: {
-                        isActive: true,
-                        fechaFin: {
-                            gte: new Date()
-                        }
+                        isActive: true
+                    },
+                    orderBy: {
+                        fechaInicio: "desc"
                     }
                 }
             },
         });
 
         if (!planta) {
-            throw new NotFoundException(`No se encontró la planta`);
+            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
         }
 
         return planta;
-
     }
 
     async createPlanta(dto: PlantasPostDto) {
         return this.prisma.planta.create({
             data: {
                 nombre: dto.nombre,
-                especie: dto.especie,
-                ubicacion: dto.ubicacion,
+                idEspecie: dto.idEspecie,
+                idUbicacion: dto.idUbicacion,
             },
+            include: {
+                especie: true,
+                ubicacion: true,
+            }
         });
     }
 
     async updatePlanta(id: number, dto: PlantasPostDto) {
-
         const plantExist = await this.prisma.planta.findUnique({
             where: { id }
         });
 
         if (!plantExist) {
-            throw new NotFoundException(`No se encontró la planta`);
+            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
         }
 
         return this.prisma.planta.update({
             where: { id },
             data: {
                 nombre: dto.nombre,
-                especie: dto.especie,
-                ubicacion: dto.ubicacion,
-
+                idEspecie: dto.idEspecie,
+                idUbicacion: dto.idUbicacion,
             },
+            include: {
+                especie: true,
+                ubicacion: true,
+            }
         });
     }
 
     async deletePlanta(id: number) {
-
         const plantExist = await this.prisma.planta.findUnique({
             where: { id }
         });
 
         if (!plantExist) {
-            throw new NotFoundException(`No se encontró la planta`);
+            throw new NotFoundException(`No se encontró la planta con ID ${id}`);
         }
-
 
         return this.prisma.planta.update({
             where: { id },
             data: {
                 isActive: false
+            },
+            include: {
+                especie: true,
+                ubicacion: true,
             }
         });
     }
