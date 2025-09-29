@@ -30,6 +30,7 @@ import type { FieldProps } from "formik";
 import * as Yup from "yup";
 import Swal from "sweetalert2";
 import dayjs, { type Dayjs } from "dayjs";
+import { validateEmptyTime } from "../../utils/validateEmptyTime";
 
 dayjs.locale("es");
 
@@ -128,13 +129,27 @@ const CareForm = () => {
   const validateBusinessRules = (values: any) => {
     const errors: any = {};
 
-    if (values.tipo && values.fechaInicio && plantId) {
+    if (values.tipo && values.fechaInicio && values.fechaFin && plantId) {
       const fechaInicio = values.fechaInicio.toDate();
+      const fechaFin = values.fechaFin.toDate();
       const idPlantaNum = parseInt(plantId);
 
       const cuidadosParaValidar = existingCuidados.filter((c) =>
         isEditing ? c.id !== parseInt(id!) : true
       );
+
+      if (
+        !validateEmptyTime(
+          fechaInicio,
+          fechaFin,
+          idPlantaNum,
+          cuidadosParaValidar,
+          isEditing ? parseInt(id!) : undefined
+        )
+      ) {
+        errors.fechaInicio =
+          "El horario seleccionado está ocupado por otro cuidado de esta planta";
+      }
 
       if (
         !validateRiegoTime(
@@ -284,7 +299,11 @@ const CareForm = () => {
                             value={field.value}
                             onChange={(value) => setFieldValue("tipo", value)}
                             error={touched.tipo && !!errors.tipo}
-                            helperText={touched.tipo && errors.tipo ? errors.tipo : undefined}
+                            helperText={
+                              touched.tipo && errors.tipo
+                                ? errors.tipo
+                                : undefined
+                            }
                             required
                           />
                         )}
@@ -306,7 +325,11 @@ const CareForm = () => {
                           setFieldValue("fechaInicio", newValue)
                         }
                         error={touched.fechaInicio && !!errors.fechaInicio}
-                        helperText={touched.fechaInicio && errors.fechaInicio ? errors.fechaInicio : undefined}
+                        helperText={
+                          touched.fechaInicio && errors.fechaInicio
+                            ? errors.fechaInicio
+                            : undefined
+                        }
                         required
                         disablePast={!isEditing}
                       />
@@ -318,7 +341,11 @@ const CareForm = () => {
                           setFieldValue("fechaFin", newValue)
                         }
                         error={touched.fechaFin && !!errors.fechaFin}
-                        helperText={touched.fechaFin && errors.fechaFin ? errors.fechaFin : undefined}
+                        helperText={
+                          touched.fechaFin && errors.fechaFin
+                            ? errors.fechaFin
+                            : undefined
+                        }
                         required
                         disablePast={!isEditing}
                       />
@@ -335,7 +362,11 @@ const CareForm = () => {
                             fullWidth
                             placeholder="Describe detalles específicos del cuidado..."
                             error={touched.notas && !!errors.notas}
-                            helperText={touched.notas && errors.notas ? errors.notas : undefined}
+                            helperText={
+                              touched.notas && errors.notas
+                                ? errors.notas
+                                : undefined
+                            }
                             sx={{
                               "& .MuiOutlinedInput-root": {
                                 borderRadius: 2,

@@ -3,6 +3,60 @@ import { PrismaService } from "src/config/prisma/prisma.service";
 import { ValidationResult } from "src/DTOs/Cuidados-Validations.dto";
 
 export class CuidadosValidationsUtils {
+
+    static async validateEmptyTime(
+        fechaInicio: string,
+        prisma: PrismaService,
+        idPlanta: number,
+        fechaFin?: string,
+    ): Promise<ValidationResult> {
+        if (!fechaFin) {
+            return { isValid: true };
+        }
+
+        const startTime = new Date(fechaInicio);
+        const endTime = new Date(fechaFin);
+
+        if (startTime >= endTime) {
+            return {
+                isValid: false,
+                errorMessage: 'La fecha de inicio debe ser anterior a la fecha de fin.',
+            };
+        }
+
+        const cuidadoExistente = await prisma.cuidado.findFirst({
+            where: {
+                isActive: true,
+                idPlanta,
+                OR: [
+                    {
+                        fechaInicio: { lte: startTime },
+                        fechaFin: { gte: startTime },
+                    },
+                    {
+                        fechaInicio: { lte: endTime },
+                        fechaFin: { gte: endTime },
+                    },
+                    {
+                        fechaInicio: { gte: startTime },
+                        fechaFin: { lte: endTime },
+                    },
+                ],
+            },
+        });
+
+        if (cuidadoExistente) {
+            return {
+                isValid: false,
+                errorMessage:
+                    'Las fechas seleccionadas coinciden con otro cuidado ya programado. Por favor, elige un rango diferente.'
+                ,
+            };
+        }
+
+        return { isValid: true };
+    }
+
     static validateDates(fechaInicio: string, fechaFin?: string): ValidationResult {
         if (!fechaFin) return { isValid: true };
 
@@ -97,14 +151,16 @@ export class CuidadosValidationsUtils {
         fechaFin?: string
     ): Promise<ValidationResult> {
         const dateValidation = this.validateDates(fechaInicio, fechaFin);
-        if (!dateValidation.isValid) {
-            return dateValidation;
-        }
+        if (!dateValidation.isValid) return dateValidation;
+
+
+        const emptyTimeValidacion = await this.validateEmptyTime(fechaInicio, prisma, idPlanta, fechaFin);
+        if (!emptyTimeValidacion.isValid) return emptyTimeValidacion
+
 
         const riegoValidation = await this.validateRiegoTime(tipo, fechaInicio, idPlanta, prisma);
-        if (!riegoValidation.isValid) {
-            return riegoValidation;
-        }
+        if (!riegoValidation.isValid) return riegoValidation;
+
 
         const podaFertilizacionValidation = await this.validateFertilizacionAndPoda(
             tipo,
@@ -113,9 +169,8 @@ export class CuidadosValidationsUtils {
             prisma
         );
 
-        if (!podaFertilizacionValidation.isValid) {
+        if (!podaFertilizacionValidation.isValid)
             return podaFertilizacionValidation;
-        }
 
         return { isValid: true };
     }
