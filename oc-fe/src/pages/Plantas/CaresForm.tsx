@@ -21,7 +21,6 @@ import TipoCuidadoSelect from "../../components/TipoCuidadoSelect";
 import { useNavigate, useParams } from "react-router";
 import { cuidadosService } from "../../services/cuidados.services";
 import type { CuidadosPostDto } from "../../DTO/CuidadosPostDTO";
-import { TipoCuidado } from "../../shared/TipoCuidado.enum";
 import type { CuidadosType } from "../../types/Cuidados.type";
 import { validateFertilizacionAndPoda } from "../../utils/validateSameTime";
 import { validateRiegoTime } from "../../utils/validateRiegoTime";

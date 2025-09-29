@@ -72,11 +72,8 @@ const SuggestedPage = () => {
   const fetchPlantas = async () => {
     setLoadingPlantas(true);
     try {
-      const response = await plantasService.getAllPlantas({
-        page: 1,
-        limit: 1000,
-      });
-      setPlantas(response.data);
+      const plantas = await plantasService.getPlantasForSelect();
+      setPlantas(plantas);
     } catch (error) {
       Swal.fire({
         title: "Error",

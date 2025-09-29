@@ -10,6 +10,11 @@ import { Planta } from "@prisma/client";
 @Controller('plantas')
 export class PlantasController {
     constructor(private readonly plantasService: PlantasService) { }
+    @Get('select')
+    async getPlantasForSelect(): Promise<Planta[]> {
+        return this.plantasService.getAllPlantasForSelect();
+    }
+
     @Get()
     async getAllplantas(@Query() filtro: PaginationParamsDto): Promise<PaginatedResponseDto<Planta>> {
         return this.plantasService.getAllplantas(filtro);

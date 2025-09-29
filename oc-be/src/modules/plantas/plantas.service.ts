@@ -9,6 +9,18 @@ import { PaginatedResponseDto } from 'src/DTOs/PaginatedResponse.dto';
 export class PlantasService {
     constructor(private prisma: PrismaService) { }
 
+    async getAllPlantasForSelect(): Promise<Planta[]> {
+        return this.prisma.planta.findMany({
+            where: {
+                isActive: true,
+            },
+
+            orderBy: {
+                nombre: 'asc'
+            }
+        });
+    }
+
     async getAllplantas(filters: PaginationParamsDto): Promise<PaginatedResponseDto<Planta>> {
         const { page = 1, limit = 10, search } = filters;
         const skip = (page - 1) * limit;

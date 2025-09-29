@@ -30,4 +30,9 @@ export const plantasService = {
     deletePlanta: async (id: number): Promise<void> => {
         await axiosConfig.delete(`/plantas/${id}`);
     },
+
+    getPlantasForSelect: async (): Promise<PlantasType[]> => {
+        const response = await axiosConfig.get("/plantas/select");
+        return response.data;
+    },
 };
